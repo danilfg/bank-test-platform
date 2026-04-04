@@ -1,9 +1,15 @@
 # EasyITLab Bank
 
-![CI](https://github.com/danilfg/bank/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/danilfg/bank-open-source/actions/workflows/ci.yml/badge.svg)
 ![Лицензия](https://img.shields.io/badge/license-Source%20Available-blue)
-![Stars](https://img.shields.io/github/stars/danilfg/bank)
-![Forks](https://img.shields.io/github/forks/danilfg/bank)
+![Stars](https://img.shields.io/github/stars/danilfg/bank-open-source)
+![Forks](https://img.shields.io/github/forks/danilfg/bank-open-source)
+![Jenkins](https://img.shields.io/badge/Jenkins-CI-D24939?logo=jenkins&logoColor=white)
+![Allure](https://img.shields.io/badge/Allure-Reports-ff6f00)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Database-336791?logo=postgresql&logoColor=white)
+![REST API / Swagger](https://img.shields.io/badge/REST%20API%20%2F%20Swagger-Docs-85ea2d?logo=swagger&logoColor=black)
+![Redis](https://img.shields.io/badge/Redis-Cache-DC382D?logo=redis&logoColor=white)
+![Kafka](https://img.shields.io/badge/Kafka-Events-231F20?logo=apachekafka&logoColor=white)
 
 Образовательная банковская платформа для изучения:
 
@@ -35,13 +41,13 @@
 Клонируйте репозиторий:
 
 ```bash
-git clone https://github.com/danilfg/bank
+git clone https://github.com/danilfg/bank-open-source.git
 ```
 
 Перейдите в папку проекта:
 
 ```bash
-cd bank
+cd bank-open-source
 ```
 
 Запустите через Docker:
