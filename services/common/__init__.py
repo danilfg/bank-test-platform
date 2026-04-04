@@ -1,1 +1,1 @@
-"""Common utilities for Легко в ИТ банк microservices."""
+"""Common utilities for EasyBank microservices."""

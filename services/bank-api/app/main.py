@@ -199,7 +199,7 @@ class TicketMessageCreate(BaseModel):
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
-                "message": "Провёл проверку. Можно связываться с клиентом и закрывать обращение."
+                "message": "Verification completed. You can contact the client and close the ticket."
             }
         }
     )
@@ -285,8 +285,8 @@ class EmployeeClientQuickCreate(BaseModel):
         json_schema_extra={
             "example": {
                 "student_username": "client-owner@demobank.local",
-                "first_name": "Иван",
-                "last_name": "Петров",
+                "first_name": "Daniil",
+                "last_name": "Nikolaev",
                 "phone": "+79990001122",
                 "email": "client-owner@demobank.local",
             }
@@ -305,7 +305,7 @@ class StudentEmployeeCreate(BaseModel):
         json_schema_extra={
             "example": {
                 "email": "employee.demo@demobank.local",
-                "full_name": "Иван Петров",
+                "full_name": "Daniil Nikolaev",
                 "password": "employee123",
             }
         }
@@ -334,7 +334,7 @@ class StudentEmployeeUpdate(BaseModel):
         json_schema_extra={
             "example": {
                 "email": "employee.demo@demobank.local",
-                "full_name": "Иван Петров",
+                "full_name": "Daniil Nikolaev",
             }
         }
     )
@@ -935,15 +935,24 @@ async def get_student_employee_or_404(db: AsyncSession, actor: StudentUser, empl
     if not employee:
         raise DomainError(404, "EMPLOYEE_NOT_FOUND", "Employee not found")
     ensure_student_owns_employee(actor, employee)
+    # Student users linked to client profiles are not employees in student cabinet.
+    linked_client = (
+        await db.execute(select(Client.id).where(Client.student_user_id == employee.id))
+    ).scalar_one_or_none()
+    if linked_client is not None:
+        raise DomainError(404, "EMPLOYEE_NOT_FOUND", "Employee not found")
     return employee
 
 
 async def get_student_employee_ids(db: AsyncSession, actor: StudentUser) -> list[uuid.UUID]:
     rows = (
         await db.execute(
-            select(StudentUser.id).where(
+            select(StudentUser.id)
+            .outerjoin(Client, Client.student_user_id == StudentUser.id)
+            .where(
                 StudentUser.system_role == SystemRole.STUDENT,
                 StudentUser.created_by_admin_id == actor.id,
+                Client.id.is_(None),
             )
         )
     ).scalars().all()
@@ -1914,18 +1923,16 @@ async def student_list_employees(
     claims: dict = Depends(require_system_role(SystemRole.STUDENT.value)),
 ):
     actor = await get_student_actor(db, claims)
+    employee_ids = await get_student_employee_ids(db, actor)
+    if not employee_ids:
+        return []
     employees = (
         await db.execute(
-            select(StudentUser).where(
-                StudentUser.system_role == SystemRole.STUDENT,
-                StudentUser.created_by_admin_id == actor.id,
-            ).order_by(StudentUser.created_at.desc())
+            select(StudentUser)
+            .where(StudentUser.id.in_(employee_ids))
+            .order_by(StudentUser.created_at.desc())
         )
     ).scalars().all()
-    if not employees:
-        return []
-
-    employee_ids = [row.id for row in employees]
     clients = (
         await db.execute(select(Client).where(Client.created_by_employee_id.in_(employee_ids)))
     ).scalars().all()

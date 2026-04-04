@@ -41,14 +41,14 @@ from common.security import hash_password
 
 STUDENT_PUBLIC_ID_PREFIX = "st-"
 STUDENT_PUBLIC_ID_START = 100
-EMPLOYEE_COUNT = 5
+EMPLOYEE_COUNT = 7
 CLIENTS_PER_EMPLOYEE = 5
 MIN_CLIENT_ACCOUNTS = 3
 MAX_CLIENT_ACCOUNTS = 6
-MIN_CLIENT_TICKETS = 1
-MAX_CLIENT_TICKETS = 4
-MIN_TICKET_MESSAGES = 3
-MAX_TICKET_MESSAGES = 8
+MIN_CLIENT_TICKETS = 0
+MAX_CLIENT_TICKETS = 0
+MIN_TICKET_MESSAGES = 0
+MAX_TICKET_MESSAGES = 0
 
 EMPLOYEE_NAME_PAIRS: tuple[tuple[str, str], ...] = (
     ("Alexey", "Voronov"),
@@ -221,10 +221,13 @@ async def _cleanup_student_scope(
 ) -> None:
     employees = (
         await db.execute(
-            select(StudentUser).where(
+            select(StudentUser)
+            .outerjoin(Client, Client.student_user_id == StudentUser.id)
+            .where(
                 StudentUser.system_role == SystemRole.STUDENT,
                 StudentUser.created_by_admin_id == actor.id,
                 StudentUser.id != actor.id,
+                Client.id.is_(None),
             )
         )
     ).scalars().all()

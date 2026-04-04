@@ -211,7 +211,7 @@ async def openapi_json(request: Request):
     except Exception:
         return {
             "openapi": "3.1.0",
-            "info": {"title": "Легко в ИТ банк API", "version": "1.0.0", "description": SWAGGER_TOP_DESCRIPTION},
+            "info": {"title": "EasyBank API", "version": "1.0.0", "description": SWAGGER_TOP_DESCRIPTION},
             "paths": {},
             "components": {"schemas": {}, "securitySchemes": {}},
             "x_error": "Failed to load upstream openapi specs",

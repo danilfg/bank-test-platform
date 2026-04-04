@@ -659,7 +659,7 @@ function App() {
   const [employeesPage, setEmployeesPage] = useState(1);
 
   const [employeeCreateOpen, setEmployeeCreateOpen] = useState(false);
-  const [employeeCreateFullName, setEmployeeCreateFullName] = useState("");
+  const [employeeCreateFullName, setEmployeeCreateFullName] = useState("Daniil Nikolaev");
   const [employeeCreateEmail, setEmployeeCreateEmail] = useState("");
   const [employeeCreatePassword, setEmployeeCreatePassword] = useState("");
 
@@ -719,10 +719,10 @@ function App() {
   const [generateEntitiesConfirmOpen, setGenerateEntitiesConfirmOpen] = useState(false);
   const [clientCreateStudentUsername, setClientCreateStudentUsername] = useState("");
   const [clientCreateEmployeeId, setClientCreateEmployeeId] = useState("");
-  const [clientCreateFirstName, setClientCreateFirstName] = useState("Иван");
-  const [clientCreateLastName, setClientCreateLastName] = useState("Иванов");
+  const [clientCreateFirstName, setClientCreateFirstName] = useState("Daniil");
+  const [clientCreateLastName, setClientCreateLastName] = useState("Nikolaev");
   const [clientCreatePhone, setClientCreatePhone] = useState("+79990000000");
-  const [clientCreateEmail, setClientCreateEmail] = useState("ivanov.client@demobank.local");
+  const [clientCreateEmail, setClientCreateEmail] = useState("daniil.nikolaev.client@demobank.local");
 
   const [openAccountModal, setOpenAccountModal] = useState(false);
   const [newClientAccountCurrency, setNewClientAccountCurrency] = useState("RUB");
@@ -870,7 +870,7 @@ function App() {
       return;
     }
     if (!token) {
-      setNotice("Сначала войдите в кабинет студента.");
+      setNotice(t("Сначала войдите в кабинет студента.", "Sign in to the student cabinet first."));
       return;
     }
     try {
@@ -1332,7 +1332,7 @@ function App() {
 
   async function loginWithCredentials(): Promise<void> {
     if (!username || !password) {
-      setNotice("Укажите логин и пароль.");
+      setNotice(t("Укажите логин и пароль.", "Enter login and password."));
       return;
     }
 
@@ -1356,13 +1356,13 @@ function App() {
         username: me.username,
       });
       void hydrateWorkspace(payload.access_token);
-      setNotice(`Вход выполнен: ${me.full_name || me.email}`);
+      setNotice(t(`Вход выполнен: ${me.full_name || me.email}`, `Signed in: ${me.full_name || me.email}`));
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       if (isStudentCabinetAccessError(message)) {
         clearState();
         setHash("/login");
-        setNotice("Вход в кабинет студента разрешен только для учетной записи студента.");
+        setNotice(t("Вход в кабинет студента разрешен только для учетной записи студента.", "Student cabinet access is allowed only for a student account."));
       } else {
         setNotice(message);
       }
@@ -1397,7 +1397,7 @@ function App() {
       if (isStudentCabinetAccessError(message)) {
         clearState();
         setHash("/login");
-        setNotice("Вход в кабинет студента разрешен только для учетной записи студента.");
+        setNotice(t("Вход в кабинет студента разрешен только для учетной записи студента.", "Student cabinet access is allowed only for a student account."));
       } else {
         setNotice(message);
       }
@@ -1465,7 +1465,7 @@ function App() {
       return;
     }
     if (!employeeCreateFullName.trim() || !employeeCreateEmail.trim()) {
-      setNotice("Заполните ФИО и email сотрудника.");
+      setNotice(t("Заполните ФИО и email сотрудника.", "Fill employee full name and email."));
       return;
     }
     setBusy(true);
@@ -1485,11 +1485,15 @@ function App() {
       );
       await Promise.all([loadEmployees(token), loadDashboard(token), loadEvents(token)]);
       setEmployeeCreateOpen(false);
-      setEmployeeCreateFullName("");
+      setEmployeeCreateFullName("Daniil Nikolaev");
       setEmployeeCreateEmail("");
       setEmployeeCreatePassword("");
       setHash(`/student/employees/${encodeURIComponent(created.id)}`);
-      setNotice(created.generated_password ? `Сотрудник создан. Сгенерированный пароль: ${created.generated_password}` : "Сотрудник создан.");
+      setNotice(
+        created.generated_password
+          ? t(`Сотрудник создан. Сгенерированный пароль: ${created.generated_password}`, `Employee created. Generated password: ${created.generated_password}`)
+          : t("Сотрудник создан.", "Employee created.")
+      );
     } catch (error) {
       setNotice(error instanceof Error ? error.message : String(error));
     } finally {
@@ -1502,7 +1506,7 @@ function App() {
       return;
     }
     if (employees.length === 0) {
-      setNotice("Сначала создайте сотрудника.");
+      setNotice(t("Сначала создайте сотрудника.", "Create an employee first."));
       return;
     }
 
@@ -1511,11 +1515,11 @@ function App() {
       clientCreateEmployeeId ||
       employees[0]?.id;
     if (!preferredEmployeeId) {
-      setNotice("Сначала создайте сотрудника.");
+      setNotice(t("Сначала создайте сотрудника.", "Create an employee first."));
       return;
     }
     if (!clientCreateFirstName.trim() || !clientCreateLastName.trim() || !clientCreateEmail.trim()) {
-      setNotice("Заполните имя, фамилию и email клиента.");
+      setNotice(t("Заполните имя, фамилию и email клиента.", "Fill client first name, last name, and email."));
       return;
     }
 
@@ -1542,12 +1546,16 @@ function App() {
       }
       setClientCreateOpen(false);
       setClientCreateStudentUsername("");
-      setClientCreateFirstName("Иван");
-      setClientCreateLastName("Иванов");
+      setClientCreateFirstName("Daniil");
+      setClientCreateLastName("Nikolaev");
       setClientCreatePhone("+79990000000");
-      setClientCreateEmail("ivanov.client@demobank.local");
+      setClientCreateEmail("daniil.nikolaev.client@demobank.local");
       setHash(`/student/clients/${encodeURIComponent(created.id)}`);
-      setNotice(created.generated_password ? `Клиент создан. Сгенерированный пароль: ${created.generated_password}` : "Клиент создан.");
+      setNotice(
+        created.generated_password
+          ? t(`Клиент создан. Сгенерированный пароль: ${created.generated_password}`, `Client created. Generated password: ${created.generated_password}`)
+          : t("Клиент создан.", "Client created.")
+      );
     } catch (error) {
       setNotice(error instanceof Error ? error.message : String(error));
     } finally {
@@ -1557,7 +1565,7 @@ function App() {
 
   function openClientCreateModal(employeeId?: string): void {
     if (employees.length === 0) {
-      setNotice("Сначала создайте сотрудника.");
+      setNotice(t("Сначала создайте сотрудника.", "Create an employee first."));
       return;
     }
     const fallback = employeeId || employees[0]?.id || "";
@@ -1577,7 +1585,7 @@ function App() {
       return;
     }
     if (!employeeEditFullName.trim() || !employeeEditEmail.trim()) {
-      setNotice("Заполните ФИО и email.");
+      setNotice(t("Заполните ФИО и email.", "Fill full name and email."));
       return;
     }
     setBusy(true);
@@ -1593,7 +1601,7 @@ function App() {
       );
       await Promise.all([loadEmployees(token), loadDashboard(token), loadEvents(token), loadEmployeeProfile(token, employeeProfile.id)]);
       setEmployeeEditOpen(false);
-      setNotice("Сотрудник обновлен.");
+      setNotice(t("Сотрудник обновлен.", "Employee updated."));
     } catch (error) {
       setNotice(error instanceof Error ? error.message : String(error));
     } finally {
@@ -1614,7 +1622,7 @@ function App() {
       if (route.route === "student" && route.section === "employee-profile" && route.employeeId === employeeId) {
         await loadEmployeeProfile(token, employeeId);
       }
-      setNotice(blocked ? "Сотрудник разблокирован." : "Сотрудник заблокирован.");
+      setNotice(blocked ? t("Сотрудник разблокирован.", "Employee unblocked.") : t("Сотрудник заблокирован.", "Employee blocked."));
     } catch (error) {
       setNotice(error instanceof Error ? error.message : String(error));
     } finally {
@@ -1626,7 +1634,7 @@ function App() {
     if (!token) {
       return;
     }
-    if (!window.confirm("Удалить сотрудника и связанные данные клиентов безвозвратно?")) {
+    if (!window.confirm(t("Удалить сотрудника и связанные данные клиентов безвозвратно?", "Delete employee and related client data permanently?"))) {
       return;
     }
     setBusy(true);
@@ -1637,7 +1645,7 @@ function App() {
       if (route.route === "student" && route.section === "employee-profile" && route.employeeId === employeeId) {
         setHash("/student/employees");
       }
-      setNotice("Сотрудник удален.");
+      setNotice(t("Сотрудник удален.", "Employee deleted."));
     } catch (error) {
       setNotice(error instanceof Error ? error.message : String(error));
     } finally {
@@ -1657,7 +1665,7 @@ function App() {
       if (route.route === "student" && route.section === "client-profile" && route.clientId === clientId) {
         await loadStudentClientProfile(token, clientId);
       }
-      setNotice("Статус клиента обновлен.");
+      setNotice(t("Статус клиента обновлен.", "Client status updated."));
     } catch (error) {
       setNotice(error instanceof Error ? error.message : String(error));
     } finally {
@@ -1669,7 +1677,7 @@ function App() {
     if (!token) {
       return;
     }
-    if (!window.confirm("Удалить клиента и все связанные сущности безвозвратно?")) {
+    if (!window.confirm(t("Удалить клиента и все связанные сущности безвозвратно?", "Delete client and all related entities permanently?"))) {
       return;
     }
     setBusy(true);
@@ -1680,7 +1688,7 @@ function App() {
       if (route.route === "student" && route.section === "client-profile" && route.clientId === clientId) {
         setHash("/student/clients");
       }
-      setNotice("Клиент удален.");
+      setNotice(t("Клиент удален.", "Client deleted."));
     } catch (error) {
       setNotice(error instanceof Error ? error.message : String(error));
     } finally {
@@ -1705,7 +1713,7 @@ function App() {
       );
       await Promise.all([loadStudentClientProfile(token, clientProfile.id), loadEvents(token), loadDashboard(token), loadClients(token)]);
       setOpenAccountModal(false);
-      setNotice("Счет для клиента открыт.");
+      setNotice(t("Счет для клиента открыт.", "Client account opened."));
     } catch (error) {
       setNotice(error instanceof Error ? error.message : String(error));
     } finally {
@@ -1722,7 +1730,7 @@ function App() {
     try {
       await api(`/students/accounts/${accountId}/${endpoint}`, { method: "PATCH" }, token);
       await Promise.all([loadStudentClientProfile(token, clientProfile.id), loadEvents(token), loadDashboard(token)]);
-      setNotice("Статус счета обновлен.");
+      setNotice(t("Статус счета обновлен.", "Account status updated."));
     } catch (error) {
       setNotice(error instanceof Error ? error.message : String(error));
     } finally {
@@ -1734,7 +1742,7 @@ function App() {
     if (!token || !clientProfile) {
       return;
     }
-    if (!window.confirm("Удалить счет безвозвратно?")) {
+    if (!window.confirm(t("Удалить счет безвозвратно?", "Delete account permanently?"))) {
       return;
     }
     setBusy(true);
@@ -1742,7 +1750,7 @@ function App() {
     try {
       await api(`/students/accounts/${accountId}`, { method: "DELETE" }, token);
       await Promise.all([loadStudentClientProfile(token, clientProfile.id), loadEvents(token), loadDashboard(token)]);
-      setNotice("Счет удален.");
+      setNotice(t("Счет удален.", "Account deleted."));
     } catch (error) {
       setNotice(error instanceof Error ? error.message : String(error));
     } finally {
@@ -1756,7 +1764,7 @@ function App() {
     }
     const employeeId = String((clientProfile as Record<string, unknown>).employee_id || "");
     if (!employeeId) {
-      setNotice("Не найден ответственный сотрудник для клиента.");
+      setNotice(t("Не найден ответственный сотрудник для клиента.", "Responsible employee for this client was not found."));
       return;
     }
     setBusy(true);
@@ -1764,7 +1772,7 @@ function App() {
     try {
       await api(`/students/employees/${employeeId}/tickets/${selectedEmployeeTicketId}/assign`, { method: "PATCH" }, token);
       await Promise.all([loadStudentClientProfile(token, clientProfile.id), loadEvents(token), loadEmployeeProfile(token, employeeId)]);
-      setNotice("Тикет назначен на вас.");
+      setNotice(t("Тикет назначен на вас.", "Ticket assigned to you."));
     } catch (error) {
       setNotice(error instanceof Error ? error.message : String(error));
     } finally {
@@ -1778,7 +1786,7 @@ function App() {
     }
     const employeeId = String((clientProfile as Record<string, unknown>).employee_id || "");
     if (!employeeId) {
-      setNotice("Не найден ответственный сотрудник для клиента.");
+      setNotice(t("Не найден ответственный сотрудник для клиента.", "Responsible employee for this client was not found."));
       return;
     }
     setBusy(true);
@@ -1793,7 +1801,7 @@ function App() {
         token
       );
       await Promise.all([loadStudentClientProfile(token, clientProfile.id), loadEvents(token), loadEmployeeProfile(token, employeeId)]);
-      setNotice("Статус тикета обновлен.");
+      setNotice(t("Статус тикета обновлен.", "Ticket status updated."));
     } catch (error) {
       setNotice(error instanceof Error ? error.message : String(error));
     } finally {
@@ -1807,7 +1815,7 @@ function App() {
     }
     const employeeId = String((clientProfile as Record<string, unknown>).employee_id || "");
     if (!employeeId) {
-      setNotice("Не найден ответственный сотрудник для клиента.");
+      setNotice(t("Не найден ответственный сотрудник для клиента.", "Responsible employee for this client was not found."));
       return;
     }
     setBusy(true);
@@ -1822,7 +1830,7 @@ function App() {
         token
       );
       await Promise.all([loadEvents(token), loadStudentClientProfile(token, clientProfile.id), loadEmployeeProfile(token, employeeId)]);
-      setNotice("Сообщение в тикет отправлено.");
+      setNotice(t("Сообщение в тикет отправлено.", "Ticket message sent."));
     } catch (error) {
       setNotice(error instanceof Error ? error.message : String(error));
     } finally {
@@ -1839,7 +1847,7 @@ function App() {
     try {
       await api(`/students/employees/${employeeId}/tickets/${ticketId}/assign`, { method: "PATCH" }, token);
       await Promise.all([loadEmployeeProfile(token, employeeId), loadEvents(token)]);
-      setNotice("Тикет назначен.");
+      setNotice(t("Тикет назначен.", "Ticket assigned."));
     } catch (error) {
       setNotice(error instanceof Error ? error.message : String(error));
     } finally {
@@ -1863,7 +1871,7 @@ function App() {
         token
       );
       await Promise.all([loadEmployeeProfile(token, employeeId), loadEvents(token)]);
-      setNotice("Статус тикета обновлен.");
+      setNotice(t("Статус тикета обновлен.", "Ticket status updated."));
     } catch (error) {
       setNotice(error instanceof Error ? error.message : String(error));
     } finally {
@@ -1888,7 +1896,7 @@ function App() {
       );
       await Promise.all([loadClientWorkspace(token), loadEvents(token)]);
       setOpenOwnAccountForm(false);
-      setNotice("Счет создан.");
+      setNotice(t("Счет создан.", "Account created."));
     } catch (error) {
       setNotice(error instanceof Error ? error.message : String(error));
     } finally {
@@ -1900,7 +1908,7 @@ function App() {
     if (!token || !accountId) {
       return;
     }
-    if (hardDelete && !window.confirm("Удалить счет безвозвратно?")) {
+    if (hardDelete && !window.confirm(t("Удалить счет безвозвратно?", "Delete account permanently?"))) {
       return;
     }
     setBusy(true);
@@ -1909,7 +1917,7 @@ function App() {
       const endpoint = hardDelete ? `/clients/me/accounts/${accountId}/hard-delete` : `/clients/me/accounts/${accountId}`;
       await api(endpoint, { method: "DELETE" }, token);
       await Promise.all([loadClientWorkspace(token), loadEvents(token)]);
-      setNotice(hardDelete ? "Счет удален безвозвратно." : "Счет закрыт.");
+      setNotice(hardDelete ? t("Счет удален безвозвратно.", "Account permanently deleted.") : t("Счет закрыт.", "Account closed."));
     } catch (error) {
       setNotice(error instanceof Error ? error.message : String(error));
     } finally {
@@ -1922,7 +1930,7 @@ function App() {
       return;
     }
     if (!transferSourceId || !transferTargetId || !transferAmount) {
-      setNotice("Укажите источник, получателя и сумму перевода.");
+      setNotice(t("Укажите источник, получателя и сумму перевода.", "Provide source, target, and transfer amount."));
       return;
     }
     setBusy(true);
@@ -1945,7 +1953,7 @@ function App() {
         token
       );
       await Promise.all([loadClientWorkspace(token), loadEvents(token)]);
-      setNotice("Перевод отправлен.");
+      setNotice(t("Перевод отправлен.", "Transfer submitted."));
     } catch (error) {
       setNotice(error instanceof Error ? error.message : String(error));
     } finally {
@@ -1958,7 +1966,7 @@ function App() {
       return;
     }
     if (!ownTopUpAccountId || !ownTopUpAmount) {
-      setNotice("Выберите счет и сумму для пополнения.");
+      setNotice(t("Выберите счет и сумму для пополнения.", "Select an account and top-up amount."));
       return;
     }
     setBusy(true);
@@ -1977,7 +1985,7 @@ function App() {
         token
       );
       await Promise.all([loadClientWorkspace(token), loadEvents(token)]);
-      setNotice("Наличные зачислены на счет клиента.");
+      setNotice(t("Наличные зачислены на счет клиента.", "Cash top-up completed for the client account."));
     } catch (error) {
       setNotice(error instanceof Error ? error.message : String(error));
     } finally {
@@ -1990,7 +1998,7 @@ function App() {
       return;
     }
     if (!clientTopUpAccountId || !clientTopUpAmount) {
-      setNotice("Выберите счет клиента и сумму пополнения.");
+      setNotice(t("Выберите счет клиента и сумму пополнения.", "Select client account and top-up amount."));
       return;
     }
     setBusy(true);
@@ -2009,7 +2017,7 @@ function App() {
         token
       );
       await Promise.all([loadStudentClientProfile(token, clientProfile.id), loadClients(token), loadDashboard(token), loadEvents(token)]);
-      setNotice("Счет клиента пополнен наличными.");
+      setNotice(t("Счет клиента пополнен наличными.", "Client account topped up with cash."));
     } catch (error) {
       setNotice(error instanceof Error ? error.message : String(error));
     } finally {
@@ -2022,11 +2030,11 @@ function App() {
       return;
     }
     if (!clientTransferSourceId || !clientTransferTargetId || !clientTransferAmount) {
-      setNotice("Выберите счета клиента и сумму перевода.");
+      setNotice(t("Выберите счета клиента и сумму перевода.", "Select client accounts and transfer amount."));
       return;
     }
     if (clientTransferSourceId === clientTransferTargetId) {
-      setNotice("Счет списания и счет зачисления должны отличаться.");
+      setNotice(t("Счет списания и счет зачисления должны отличаться.", "Source and target accounts must be different."));
       return;
     }
     setBusy(true);
@@ -2052,8 +2060,11 @@ function App() {
       await Promise.all([loadStudentClientProfile(token, clientProfile.id), loadClients(token), loadDashboard(token), loadEvents(token)]);
       setNotice(
         source && target && source.currency !== target.currency
-          ? `Перевод выполнен с конвертацией ${source.currency} -> ${target.currency}.`
-          : "Перевод между счетами клиента выполнен."
+          ? t(
+              `Перевод выполнен с конвертацией ${source.currency} -> ${target.currency}.`,
+              `Transfer completed with conversion ${source.currency} -> ${target.currency}.`
+            )
+          : t("Перевод между счетами клиента выполнен.", "Transfer between client accounts completed.")
       );
     } catch (error) {
       setNotice(error instanceof Error ? error.message : String(error));
@@ -2081,7 +2092,7 @@ function App() {
         const rest = prev.filter((item) => item.quote_currency !== updated.quote_currency);
         return [...rest, updated].sort((a, b) => a.quote_currency.localeCompare(b.quote_currency));
       });
-      setNotice(`Курс RUB/${quoteCurrency} обновлен.`);
+      setNotice(t(`Курс RUB/${quoteCurrency} обновлен.`, `RUB/${quoteCurrency} rate updated.`));
     } catch (error) {
       setNotice(error instanceof Error ? error.message : String(error));
     } finally {
@@ -2112,7 +2123,7 @@ function App() {
       await Promise.all([loadClientWorkspace(token), loadEvents(token)]);
       setSelectedOwnTicketId(created.id);
       setCreateTicketModalOpen(false);
-      setNotice("Обращение создано.");
+      setNotice(t("Обращение создано.", "Ticket created."));
     } catch (error) {
       setNotice(error instanceof Error ? error.message : String(error));
     } finally {
@@ -2136,7 +2147,7 @@ function App() {
         token
       );
       await loadEvents(token);
-      setNotice("Сообщение по обращению отправлено.");
+      setNotice(t("Сообщение по обращению отправлено.", "Ticket message sent."));
     } catch (error) {
       setNotice(error instanceof Error ? error.message : String(error));
     } finally {
@@ -5004,7 +5015,7 @@ redis-cli.exe -h ${HOST} -p 6379 HSET demo:user name Daniil role student`}</code
           <div className="space-y-3">
             <div>
               <label className="block text-xs font-medium text-muted-foreground mb-1">{t("ФИО", "Full name")} *</label>
-              <input className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm" value={employeeCreateFullName} onChange={(event) => setEmployeeCreateFullName(event.target.value)} placeholder="Иванов Иван" />
+              <input className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm" value={employeeCreateFullName} onChange={(event) => setEmployeeCreateFullName(event.target.value)} placeholder="Daniil Nikolaev" />
             </div>
             <div>
               <label className="block text-xs font-medium text-muted-foreground mb-1">Email *</label>

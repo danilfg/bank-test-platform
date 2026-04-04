@@ -25,6 +25,7 @@ Educational banking platform for learning:
 ![Dashboard](docs/screenshots/dashboard.png)
 ![Clients](docs/screenshots/clients.png)
 ![API](docs/screenshots/api.png)
+![API](docs/screenshots/api_3.png)
 
 ## Demo
 
