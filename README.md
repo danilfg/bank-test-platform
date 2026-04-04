@@ -1,68 +1,110 @@
-# BANK: Minimal Student-Only Open Source
+# EasyITLab Bank
 
-Минимальная open-source версия BANK только для студента.
+![CI](https://github.com/danilfg/bank/actions/workflows/ci.yml/badge.svg)
+![License](https://img.shields.io/badge/license-Source%20Available-blue)
+![Stars](https://img.shields.io/github/stars/danilfg/bank)
+![Forks](https://img.shields.io/github/forks/danilfg/bank)
 
-## Что оставлено
-- Frontend: `frontends/cabinet` (студкабинет на `http://127.0.0.1:5174/`)
-- Backend: `api-gateway`, `auth-service`, `bank-api`
-- Infra: PostgreSQL, Redis, Kafka, Jenkins
-- Student features:
-  - Login / Logout
-  - Dashboard
-  - Employees
-  - Clients
-  - Generate entities (в Employees и Clients)
-  - Jenkins
-  - PostgreSQL
-  - REST API / Swagger
-  - i18n EN/RU (EN по умолчанию)
+Educational banking platform for learning:
 
-## Доступ
-- Email: `student@easyitlab.tech`
-- Password: `student123`
+- API testing
+- automation testing
+- DevTools debugging
+- microservice testing
 
-Это единственная учетная запись для open-source версии.
+## Screenshots
 
-## Быстрый запуск
-1. Поднять окружение:
+![Dashboard](docs/screenshots/dashboard.png)
+![Clients](docs/screenshots/clients.png)
+![API](docs/screenshots/api.png)
+
+## Demo
+
+![Demo](docs/demo/demo.gif)
+
+## Features
+
+- realistic banking entities
+- student environment
+- REST API
+- Swagger documentation
+- testing playground
+
+## Quick Start
+
+Clone repository:
+
 ```bash
-make up
-```
-2. Применить миграции:
-```bash
-make migrate
-```
-3. (Опционально) выполнить seed для полной очистки и пересоздания demo-данных:
-```bash
-make seed
-```
-4. Открыть:
-- Student cabinet: `http://127.0.0.1:5174/`
-- Swagger: `http://127.0.0.1:8080/docs`
-
-После `make up` учётка `student@easyitlab.tech / student123` создаётся автоматически при старте сервисов.
-
-## Jenkins + Allure note
-Если в job `training-github-allure` появляется ошибка `python3: command not found`, пересоберите Jenkins:
-```bash
-docker compose --env-file .env up -d --build jenkins
+git clone https://github.com/danilfg/bank
 ```
 
-## Меню студента
-В левом меню оставлены только:
-- Dashboard
-- Employees
-- Clients
-- Jenkins
-- PostgreSQL
-- REST API / Swagger
-- Redis
-- Kafka
+Enter project folder:
 
-## Проверка student flow
-1. Логин `student@easyitlab.tech / student123`
-2. Открыть `Employees` и нажать `Generate entities`
-3. Открыть `Clients` и нажать `Generate entities`
-4. Открыть `Jenkins`, `PostgreSQL`, `REST API / Swagger`, `Redis`, `Kafka`
-5. Проверить переключение EN/RU
-6. Проверить Logout
+```bash
+cd bank
+```
+
+Run with Docker:
+
+```bash
+docker compose up
+```
+
+## API
+
+Example base API:
+
+```text
+https://api.bank.easyitlab.tech
+```
+
+Example login request:
+
+```text
+POST /auth/login
+```
+
+## Online Services
+
+Main website:
+
+https://easyitlab.tech/
+
+Cloud version (full functionality):
+
+https://bank.easyitlab.tech/
+
+Community Telegram:
+
+https://t.me/danilfg
+
+## Why this project exists
+
+This platform helps developers learn:
+
+- QA automation
+- API testing
+- DevTools
+- backend debugging
+
+## Contributing
+
+Contributions are welcome.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## License
+
+This project is source-available.
+
+Free for:
+
+- education
+- personal use
+- research
+
+Commercial use is prohibited.
+
+See [LICENSE](LICENSE).
+
+If this project helps you, please consider giving it a star on GitHub.

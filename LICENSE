@@ -1,0 +1,51 @@
+Business Source License 1.1
+
+Parameters
+
+Licensor: Daniil Nikolaev
+Licensed Work: EasyITLab BANK and all source files in this repository
+Additional Use Grant: Personal, educational, and research use are allowed at no cost.
+Change Date: 2030-01-01
+Change License: Apache License, Version 2.0
+
+Copyright (c) 2026 Daniil Nikolaev
+
+Terms
+
+The Licensor hereby grants you the right to copy, modify, create derivative works,
+redistribute, and make non-production use of the Licensed Work, subject to the
+limitations below.
+
+Permitted Use
+
+You may use this software for:
+- personal use
+- educational use
+- research
+
+Commercial Use Restriction
+
+Commercial use is prohibited without a separate commercial license from the Licensor.
+For clarity, you may NOT:
+- sell this software
+- host it as a SaaS platform
+- include it in commercial training
+- include it in paid products
+
+Any production, revenue-generating, customer-facing, or internal business use requires
+a separate commercial license.
+
+Change Date and Conversion
+
+On 2030-01-01, this license automatically converts to the Apache License, Version 2.0.
+After that date, the Licensed Work is governed by Apache-2.0 terms.
+
+Notice
+
+Any use of the Licensed Work must retain copyright and license notices.
+
+Disclaimer
+
+THE LICENSED WORK IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+PURPOSE AND NONINFRINGEMENT.
