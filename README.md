@@ -2,8 +2,10 @@
 
 ![CI](https://github.com/danilfg/bank-open-source/actions/workflows/ci.yml/badge.svg)
 ![License](https://img.shields.io/badge/license-Source%20Available-blue)
+
 ![Stars](https://img.shields.io/github/stars/danilfg/bank-open-source)
 ![Forks](https://img.shields.io/github/forks/danilfg/bank-open-source)
+
 ![Jenkins](https://img.shields.io/badge/Jenkins-CI-D24939?logo=jenkins&logoColor=white)
 ![Allure](https://img.shields.io/badge/Allure-Reports-ff6f00)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Database-336791?logo=postgresql&logoColor=white)
