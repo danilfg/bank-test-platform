@@ -1391,7 +1391,7 @@ function App() {
       setRefreshToken(payload.refresh_token);
       storeStudentSession(payload.refresh_token, me.email);
       void hydrateWorkspace(payload.access_token);
-      setNotice("Сессия обновлена.");
+      setNotice(t("Сессия обновлена.", "Session refreshed."));
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       if (isStudentCabinetAccessError(message)) {
