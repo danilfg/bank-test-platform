@@ -2,7 +2,7 @@
 
 If you discover a security vulnerability, please report it privately.
 
-- Email: [security@easyitlab.tech](mailto:security@easyitlab.tech)
+- Email: [info@easyitlab.tech](mailto:info@easyitlab.tech)
 
 Please include:
 

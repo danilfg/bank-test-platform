@@ -20,7 +20,7 @@ from common.models import Client, RefreshToken, StudentIdentity, StudentIdentity
 from common.observability import setup_app
 from common.security import hash_password, verify_password
 
-app = FastAPI(title="Легко в ИТ банк Auth Service", version="1.0.0")
+app = FastAPI(title="EasyBank Auth Service", version="1.0.0")
 app.add_exception_handler(DomainError, domain_error_handler)
 setup_app(app, "auth-service", engine)
 IAM_TOPIC = os.getenv("IAM_EVENTS_TOPIC", "iam-events")
