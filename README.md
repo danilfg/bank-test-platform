@@ -52,6 +52,10 @@ Click any preview to open full size.
 - Swagger documentation
 - testing playground
 
+## Architecture
+
+[![Architecture](docs/architecture/bank_architecture.png)](docs/architecture/bank_architecture.png)
+
 ## Tooling Overview
 
 This project includes six operational tools not as "extras", but as core parts of the training workflow.
@@ -137,8 +141,9 @@ GIF: `docs/demo/swagger.gif`
 ## Database Schema
 
 Database schema diagram from docs:
+Click the image to open full size.
 
-[<img src="docs/db-schema.png" alt="Database Schema" width="720" />](docs/db-schema.png)
+[<img src="docs/db-schema.png" alt="Database Schema" height="420" />](docs/db-schema.png)
 
 Source files:
 
@@ -159,10 +164,54 @@ Enter project folder:
 cd bank-open-source
 ```
 
-Run with Docker:
+Bootstrap and run with `make`:
 
 ```bash
-docker compose up
+make up
+make migrate
+```
+
+Useful runtime commands:
+
+```bash
+make ps
+make logs
+make test
+```
+
+Stop and cleanup:
+
+```bash
+make down
+```
+
+## Make Commands
+
+All available `make` targets in this repository:
+
+| Command | What it does |
+| --- | --- |
+| `make ensure-env` | Creates `.env` from `.env.example` if `.env` is missing. |
+| `make up` | Starts all services with Docker Compose (`up -d --build`). |
+| `make down` | Stops services and removes volumes (`down -v`). |
+| `make logs` | Streams service logs (`logs -f --tail=200`). |
+| `make ps` | Shows current container status. |
+| `make build` | Builds/rebuilds service images. |
+| `make migrate` | Applies Alembic migrations in `bank-api`. |
+| `make seed` | Alias to `seed-rich`; seeds demo/training data. |
+| `make seed-rich` | Runs `scripts/seed_data.py` in `bank-api`. |
+| `make reseed-clean` | Full reset: `down` -> `up` -> `seed`. |
+| `make lint` | Runs `ruff check .` inside `bank-api`. |
+| `make demo-test` | Runs demo API tests (`pytest -q tests/api`). |
+| `make test` | Runs full pytest suite (`pytest -q`). |
+
+Typical local flow:
+
+```bash
+make up
+make migrate
+make seed
+make test
 ```
 
 ## API
