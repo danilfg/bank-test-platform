@@ -1,0 +1,283 @@
+@startuml
+hide circle
+skinparam linetype ortho
+
+entity banks {
+  +id
+  full_name
+  short_name
+  bik
+  inn
+  kpp
+  ogrn
+  correspondent_account
+  legal_address
+  postal_address
+  support_phone
+  support_email
+  swift_code
+  created_at
+  updated_at
+}
+
+entity clients {
+  +id
+  student_user_id
+  bank_id
+  external_client_code
+  first_name
+  last_name
+  middle_name
+  birth_date
+  phone
+  email
+  passport_series
+  passport_number
+  passport_issued_by
+  passport_issued_date
+  tax_id_optional
+  residency_country
+  status
+  risk_level
+  is_pep_flag
+  created_at
+  updated_at
+  created_by_employee_id
+}
+
+entity accounts {
+  +id
+  bank_id
+  client_id
+  account_number
+  iban_optional
+  currency
+  type
+  balance
+  available_balance
+  hold_amount
+  overdraft_limit
+  status
+  opened_at
+  closed_at
+  blocked_reason
+  created_at
+  updated_at
+}
+
+entity cards {
+  +id
+  client_id
+  account_id
+  pan_masked
+  tokenized_pan
+  cardholder_name
+  expiry_month
+  expiry_year
+  network
+  type
+  status
+  daily_limit
+  monthly_limit
+  contactless_enabled
+  issued_at
+  blocked_reason
+  created_at
+  updated_at
+}
+
+entity transfers {
+  +id
+  bank_id
+  source_account_id
+  target_account_id
+  amount
+  currency
+  exchange_rate
+  fee_amount
+  description
+  transfer_type
+  initiated_by_role
+  status
+  failure_reason
+  cancel_reason
+  idempotency_key
+  created_at
+  updated_at
+  executed_at
+  cancelled_at
+}
+
+entity currency_exchange_rates {
+  +id
+  quote_currency
+  rub_amount
+  set_by_user_id
+  created_at
+  updated_at
+}
+
+entity support_tickets {
+  +id
+  client_id
+  employee_id_nullable
+  subject
+  description
+  priority
+  category
+  status
+  resolution
+  created_at
+  updated_at
+  closed_at
+}
+
+entity support_ticket_messages {
+  +id
+  ticket_id
+  author_type
+  author_id
+  message
+  created_at
+}
+
+entity audit_logs {
+  +id
+  actor_user_id
+  actor_system_role
+  actor_business_role
+  entity_type
+  entity_id
+  action
+  before_json
+  after_json
+  request_id
+  trace_id
+  ip
+  user_agent
+  created_at
+}
+
+entity student_users {
+  +id
+  email
+  username
+  hashed_password
+  first_name
+  last_name
+  system_role
+  is_active
+  is_blocked
+  blocked_reason
+  last_login_at
+  created_at
+  updated_at
+  created_by_admin_id
+  is_primary_admin
+  can_create_admins
+  public_id
+}
+
+entity student_sessions {
+  +id
+  user_id
+  session_id
+  ip
+  user_agent
+  is_active
+  created_at
+  last_seen_at
+}
+
+entity refresh_tokens {
+  +id
+  token_jti
+  user_id
+  session_id
+  expires_at
+  revoked
+  created_at
+}
+
+entity student_resource_usage {
+  +id
+  student_user_id
+  day_bucket
+  request_count
+  ws_messages_count
+  graphql_request_count
+  grpc_request_count
+  kafka_events_produced
+  kafka_events_consumed
+  created_entities_count
+  updated_entities_count
+  deleted_entities_count
+  total_cpu_seconds_optional
+  total_memory_mb_optional
+  updated_at
+}
+
+entity student_observable_events {
+  +id
+  student_user_id
+  topic
+  event_type
+  ws_event
+  entity_type
+  entity_id
+  payload_json
+  occurred_at
+  created_at
+}
+
+entity student_identities {
+  +id
+  user_id
+  username
+  system_role
+  status
+  requested_by_admin_id
+  last_error
+  deprovisioned_at
+  created_at
+  updated_at
+}
+
+entity student_identity_accesses {
+  +id
+  identity_id
+  service_name
+  principal
+  status
+  secret_ref
+  details_json
+  last_error
+  provisioned_at
+  revoked_at
+  created_at
+  updated_at
+}
+
+banks ||--o{ accounts
+banks ||--o{ clients
+banks ||--o{ transfers
+
+clients ||--o{ accounts
+clients ||--o{ cards
+clients ||--o{ support_tickets
+
+accounts ||--o{ cards
+accounts ||--o{ transfers : source
+accounts ||--o{ transfers : target
+
+support_tickets ||--o{ support_ticket_messages
+
+student_users ||--o{ student_sessions
+student_users ||--o{ refresh_tokens
+student_users ||--o{ student_resource_usage
+student_users ||--o{ student_observable_events
+student_users ||--o{ student_identities
+
+student_identities ||--o{ student_identity_accesses
+
+@enduml
