@@ -78,10 +78,15 @@ Instead of learning tools in isolation, students can practice on a real microser
 
 ## Screenshots
 
-![Dashboard](docs/screenshots/dashboard.png)
-![Clients](docs/screenshots/clients.png)
-![API](docs/screenshots/api.png)
-![API](docs/screenshots/api_3.png)
+Click any preview to open full size.
+
+| Dashboard | Clients |
+| --- | --- |
+| [<img src="docs/screenshots/dashboard.png" alt="Dashboard" width="420" />](docs/screenshots/dashboard.png) | [<img src="docs/screenshots/clients.png" alt="Clients" width="420" />](docs/screenshots/clients.png) |
+
+| API | API (Alt 1) |
+| --- | --- |
+| [<img src="docs/screenshots/api.png" alt="API" width="420" />](docs/screenshots/api.png) | [<img src="docs/screenshots/api_2.png" alt="API Alt 1" width="420" />](docs/screenshots/api_2.png) |
 
 ## Demo
 
