@@ -1,9 +1,9 @@
 # EasyITLab Bank
 
-![CI](https://github.com/danilfg/bank-open-source/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/danilfg/bank-test-platform/actions/workflows/ci.yml/badge.svg)
 ![Лицензия](https://img.shields.io/badge/license-Source%20Available-blue)
-![Stars](https://img.shields.io/github/stars/danilfg/bank-open-source)
-![Forks](https://img.shields.io/github/forks/danilfg/bank-open-source)
+![Stars](https://img.shields.io/github/stars/danilfg/bank-test-platform)
+![Forks](https://img.shields.io/github/forks/danilfg/bank-test-platform)
 ![Jenkins](https://img.shields.io/badge/Jenkins-CI-D24939?logo=jenkins&logoColor=white)
 ![Allure](https://img.shields.io/badge/Allure-Reports-ff6f00)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Database-336791?logo=postgresql&logoColor=white)
@@ -41,13 +41,13 @@
 Клонируйте репозиторий:
 
 ```bash
-git clone https://github.com/danilfg/bank-open-source.git
+git clone https://github.com/danilfg/bank-test-platform.git
 ```
 
 Перейдите в папку проекта:
 
 ```bash
-cd bank-open-source
+cd bank-test-platform
 ```
 
 Запустите через Docker:

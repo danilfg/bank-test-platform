@@ -1,4 +1,4 @@
-name: ${PROJECT_NAME:-test-bank-open-source}
+name: ${PROJECT_NAME:-bank-test-platform}
 
 services:
   postgres:

@@ -4,10 +4,10 @@ EasyBank is an open-source educational banking platform designed for learning QA
 
 It provides a fully working backend system with CI/CD, event streaming, database, and observability tools that can be run locally with Docker.
 
-![CI](https://github.com/danilfg/bank-open-source/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/danilfg/bank-test-platform/actions/workflows/ci.yml/badge.svg)
 ![License](https://img.shields.io/badge/license-Source%20Available-blue)
-![Stars](https://img.shields.io/github/stars/danilfg/bank-open-source)
-![Forks](https://img.shields.io/github/forks/danilfg/bank-open-source)
+![Stars](https://img.shields.io/github/stars/danilfg/bank-test-platform)
+![Forks](https://img.shields.io/github/forks/danilfg/bank-test-platform)
 ![Docker](https://img.shields.io/badge/docker-compose-2496ED?logo=docker&logoColor=white)
 ![Python](https://img.shields.io/badge/python-3.12-3776AB?logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
@@ -125,7 +125,7 @@ Architecture source files:
 ## Project Structure
 
 ```text
-bank-open-source
+bank-test-platform
 ├── .github/
 ├── docs/
 │   ├── architecture/
@@ -155,7 +155,7 @@ This project includes six operational tools as first-class learning components.
 ### Jenkins
 
 Jenkins runs reproducible CI jobs from user-provided test repositories.
-By default, tests are pulled from: `https://github.com/danilfg/bank-open-source-tests`.
+By default, tests are pulled from: `https://github.com/danilfg/bank-test-platform-tests`.
 You can start bank services with Docker, clone your own test repository, and run your own tests in the Jenkins job.
 
 Current metrics:
@@ -247,8 +247,8 @@ Source files:
 Clone repository:
 
 ```bash
-git clone https://github.com/danilfg/bank-open-source.git
-cd bank-open-source
+git clone https://github.com/danilfg/bank-test-platform.git
+cd bank-test-platform
 ```
 
 Start platform:
@@ -434,6 +434,6 @@ Created by EasyITLab / Daniil Nikolaev.
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=danilfg/bank-open-source&type=Date)](https://www.star-history.com/#danilfg/bank-open-source&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=danilfg/bank-test-platform&type=Date)](https://www.star-history.com/#danilfg/bank-test-platform&Date)
 
 If this project helps you learn testing or automation, please give it a star.

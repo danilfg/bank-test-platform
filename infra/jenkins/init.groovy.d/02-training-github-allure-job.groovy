@@ -27,7 +27,7 @@ job.addProperty(
   new ParametersDefinitionProperty(
     new StringParameterDefinition(
       "GITHUB_URL",
-      "https://github.com/danilfg/bank-open-source-tests.git",
+      "https://github.com/danilfg/bank-test-platform-tests.git",
       "Public GitHub repository URL with automated tests."
     ),
     new StringParameterDefinition(
