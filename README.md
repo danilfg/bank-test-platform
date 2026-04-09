@@ -4,6 +4,8 @@ EasyBank is an open-source educational banking platform designed for learning QA
 
 It provides a fully working backend system with CI/CD, event streaming, database, and observability tools that can be run locally with Docker.
 
+Cloud version (full functionality): https://bank.easyitlab.tech
+
 ![CI](https://github.com/danilfg/bank-test-platform/actions/workflows/ci.yml/badge.svg)
 ![License](https://img.shields.io/badge/license-Source%20Available-blue)
 ![Stars](https://img.shields.io/github/stars/danilfg/bank-test-platform)
