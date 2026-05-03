@@ -332,6 +332,7 @@ const TOOL_MAP: Record<ToolService, ToolMeta> = {
   },
   KAFKA: {
     title: "Kafka",
+    url: `http://${HOST}:8090/`,
     hint: `Kafka broker: ${HOST}:9092 (или kafka:9092 в docker-сети).`,
   },
   KIBANA: {
@@ -748,7 +749,10 @@ function App() {
       return t(`Redis: ${HOST}:6379. Учетка: ${TRAINING_STUDENT_LOGIN} / ${TRAINING_STUDENT_PASSWORD}.`, `Redis: ${HOST}:6379. Credentials: ${TRAINING_STUDENT_LOGIN} / ${TRAINING_STUDENT_PASSWORD}.`);
     }
     if (service === "KAFKA") {
-      return t(`Kafka broker: ${HOST}:9092 (или kafka:9092 внутри docker-compose).`, `Kafka broker: ${HOST}:9092 (or kafka:9092 inside docker-compose).`);
+      return t(
+        `Kafka broker: ${HOST}:9092. AsyncAPI документация событий: http://${HOST}:8090/.`,
+        `Kafka broker: ${HOST}:9092. AsyncAPI event docs: http://${HOST}:8090/.`
+      );
     }
     return fallback;
   };
@@ -3217,10 +3221,11 @@ function App() {
       return {
         summary: [
           t("Kafka хранит события в топиках, а потребители читают их асинхронно.", "Kafka stores events in topics, and consumers process them asynchronously."),
-          t("В текущем стенде web-интерфейс для Kafka не развернут.", "Kafka web UI is not deployed in the current setup."),
+          t("Вместо Kafka UI в стенде есть AsyncAPI с описанием топиков, envelope и payload схем.", "Instead of Kafka UI, the platform provides AsyncAPI docs for topics, envelope, and payload schemas."),
           t("Для практики используйте локальный broker и клиентские инструменты.", "Use the local broker and client tools for practice."),
         ],
         connection: [
+          t(`Откройте AsyncAPI: http://${HOST}:8090/.`, `Open AsyncAPI: http://${HOST}:8090/.`),
           t("Используйте Conduktor Desktop для подключения к Kafka и просмотра топиков.", "Use Conduktor Desktop to connect to Kafka and inspect topics."),
           t(`Bootstrap для локальных клиентов: ${HOST}:9092.`, `Bootstrap for local clients: ${HOST}:9092.`),
           t("Bootstrap для клиентов внутри docker-compose: kafka:9092.", "Bootstrap for clients inside docker-compose: kafka:9092."),

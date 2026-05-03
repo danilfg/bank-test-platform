@@ -18,6 +18,7 @@ Cloud version (full functionality): https://bank.easyitlab.tech
 ![Allure](https://img.shields.io/badge/Allure-Reports-ff6f00)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Database-336791?logo=postgresql&logoColor=white)
 ![REST API / Swagger](https://img.shields.io/badge/REST%20API%20%2F%20Swagger-Docs-85ea2d?logo=swagger&logoColor=black)
+![AsyncAPI](https://img.shields.io/badge/AsyncAPI-Kafka%20Docs-ff6b35)
 ![Redis](https://img.shields.io/badge/Redis-Cache-DC382D?logo=redis&logoColor=white)
 ![Kafka](https://img.shields.io/badge/Kafka-Events-231F20?logo=apachekafka&logoColor=white)
 
@@ -36,6 +37,7 @@ Cloud version (full functionality): https://bank.easyitlab.tech
 - [Quick Start](#quick-start)
 - [Make Commands](#make-commands)
 - [API](#api)
+- [AsyncAPI](#asyncapi)
 - [Running Tests](#running-tests)
 - [Learning Scenarios](#learning-scenarios)
 - [Example Use Cases](#example-use-cases)
@@ -74,6 +76,7 @@ Instead of learning tools in isolation, students can practice on a real microser
 - realistic banking entities and workflows
 - student-oriented web cabinet
 - REST API with OpenAPI/Swagger contract
+- Kafka event contract with AsyncAPI
 - Jenkins + Allure training flow
 - PostgreSQL, Redis, and Kafka integration
 - observable events, audit logs, and usage tracking
@@ -101,6 +104,7 @@ Click any preview to open full size.
 | Redis | `docs/demo/redis.gif` |
 | Kafka | `docs/demo/kafka.gif` |
 | REST API / Swagger | `docs/demo/swagger.gif` |
+| AsyncAPI | `docs/demo/asyncapi.gif` |
 
 ## Architecture
 
@@ -113,6 +117,7 @@ Core components:
 - PostgreSQL for transactional storage
 - Redis for fast transient state
 - Kafka for asynchronous events
+- AsyncAPI for Kafka topic and event contract docs
 - Jenkins + Allure for CI/test reporting
 
 The platform runs locally with Docker and can be started with `make` commands.
@@ -213,6 +218,25 @@ Current metrics:
 
 GIF: `docs/demo/kafka.gif`
 
+### AsyncAPI
+
+AsyncAPI is the live contract/documentation surface for Kafka topics and event payloads, similar to how Swagger/OpenAPI documents the REST API.
+
+Current local access:
+
+- HTML docs: `http://127.0.0.1:8090/`
+- raw spec: `http://127.0.0.1:8090/asyncapi.yaml`
+- source file in repo: [docs/asyncapi.yaml](docs/asyncapi.yaml)
+
+What it documents:
+
+- Kafka brokers for local and docker-compose clients
+- all main event topics used by the platform
+- event envelope structure shared by producers
+- event types and payload examples for domain, audit, student, IAM, and usage events
+
+Reference guide: [docs/asyncapi.md](docs/asyncapi.md)
+
 ### REST API / Swagger
 
 Swagger is the live API contract/documentation surface used for endpoint exploration and payload validation.
@@ -265,6 +289,7 @@ Open in browser:
 
 - Student Cabinet: `http://127.0.0.1:5174/`
 - Swagger: `http://127.0.0.1:8080/docs`
+- AsyncAPI: `http://127.0.0.1:8090/`
 - Jenkins: `http://127.0.0.1:8086/`
 
 Default student credentials:

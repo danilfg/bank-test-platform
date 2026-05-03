@@ -1,0 +1,848 @@
+asyncapi: 2.6.0
+info:
+  title: EasyBank Event API
+  version: 1.0.0
+  description: |
+    AsyncAPI contract for Kafka topics used by EasyITLab Bank.
+
+    This specification plays the same role for Kafka/event flows as OpenAPI/Swagger
+    does for the HTTP REST API. It describes brokers, topics, event envelopes,
+    event types, payload schemas, and examples for the local educational platform.
+
+    Event envelope used by producers:
+
+    - `event_id`: generated UUID-like hex identifier
+    - `event_type`: logical event name such as `transfer.completed`
+    - `event_version`: currently always `1`
+    - `occurred_at`: UTC ISO-8601 timestamp
+    - `trace_id`: optional trace identifier
+    - `payload`: business payload
+    - `key`: Kafka message key used by the producer
+    - `idempotency_key`: optional idempotency key for transfer-like operations
+defaultContentType: application/json
+servers:
+  local:
+    url: 127.0.0.1:9092
+    protocol: kafka
+    description: Kafka broker exposed to the host machine.
+  docker:
+    url: kafka:9092
+    protocol: kafka
+    description: Kafka broker inside the docker-compose network.
+channels:
+  auth-events:
+    description: Authentication, student identity, and employee lifecycle events.
+    publish:
+      operationId: publishAuthEvents
+      message:
+        oneOf:
+          - $ref: '#/components/messages/StudentLoginEvent'
+          - $ref: '#/components/messages/StudentPasswordChangedEvent'
+          - $ref: '#/components/messages/EmployeeLifecycleEvent'
+          - $ref: '#/components/messages/EmployeeGeneratedByStudentEvent'
+  iam-events:
+    description: Identity access management provisioning and synchronization events.
+    publish:
+      operationId: publishIamEvents
+      message:
+        oneOf:
+          - $ref: '#/components/messages/IamStudentCreatedEvent'
+  client-events:
+    description: Client profile lifecycle events.
+    publish:
+      operationId: publishClientEvents
+      message:
+        oneOf:
+          - $ref: '#/components/messages/ClientCreatedEvent'
+          - $ref: '#/components/messages/ClientCreatedByStudentEvent'
+          - $ref: '#/components/messages/ClientStatusChangedEvent'
+          - $ref: '#/components/messages/ClientStatusChangedByStudentEvent'
+          - $ref: '#/components/messages/ClientDeletedEvent'
+          - $ref: '#/components/messages/ClientDeletedByStudentEvent'
+  account-events:
+    description: Account lifecycle events for accounts opened, updated, and removed.
+    publish:
+      operationId: publishAccountEvents
+      message:
+        oneOf:
+          - $ref: '#/components/messages/AccountOpenedEvent'
+          - $ref: '#/components/messages/AccountOpenedByStudentEvent'
+          - $ref: '#/components/messages/AccountStatusChangedEvent'
+          - $ref: '#/components/messages/AccountStatusChangedByStudentEvent'
+          - $ref: '#/components/messages/AccountDeletedEvent'
+          - $ref: '#/components/messages/AccountDeletedByStudentEvent'
+  card-events:
+    description: Card issuance and card status change events.
+    publish:
+      operationId: publishCardEvents
+      message:
+        oneOf:
+          - $ref: '#/components/messages/CardIssuedEvent'
+          - $ref: '#/components/messages/CardStatusChangedEvent'
+  transfer-events:
+    description: Money movement and exchange rate events.
+    publish:
+      operationId: publishTransferEvents
+      message:
+        oneOf:
+          - $ref: '#/components/messages/TransferCompletedEvent'
+          - $ref: '#/components/messages/TransferCancelledEvent'
+          - $ref: '#/components/messages/TransferReversedEvent'
+          - $ref: '#/components/messages/ExchangeRateUpdatedByStudentEvent'
+  support-events:
+    description: Support ticket and ticket message events.
+    publish:
+      operationId: publishSupportEvents
+      message:
+        oneOf:
+          - $ref: '#/components/messages/TicketCreatedEvent'
+          - $ref: '#/components/messages/TicketCreatedByStudentEvent'
+          - $ref: '#/components/messages/TicketUpdatedEvent'
+          - $ref: '#/components/messages/TicketAssignedByStudentEvent'
+          - $ref: '#/components/messages/TicketStatusUpdatedByStudentEvent'
+          - $ref: '#/components/messages/TicketMessageCreatedEvent'
+          - $ref: '#/components/messages/TicketMessageCreatedByStudentEvent'
+  bank-events:
+    description: Platform-level operational events such as Jenkins runs.
+    publish:
+      operationId: publishBankEvents
+      message:
+        oneOf:
+          - $ref: '#/components/messages/JenkinsJobRunEvent'
+  usage-events:
+    description: Lightweight per-student usage counters.
+    publish:
+      operationId: publishUsageEvents
+      message:
+        oneOf:
+          - $ref: '#/components/messages/UsageUpdatedEvent'
+  audit-events:
+    description: Audit mirror of events emitted through the bank API helper.
+    publish:
+      operationId: publishAuditEvents
+      message:
+        oneOf:
+          - $ref: '#/components/messages/AuditMirroredEvent'
+  student-events:
+    description: Student-scoped projection of observable domain events.
+    publish:
+      operationId: publishStudentEvents
+      message:
+        oneOf:
+          - $ref: '#/components/messages/StudentScopedEvent'
+components:
+  schemas:
+    EventEnvelopeBase:
+      type: object
+      additionalProperties: false
+      required: [event_id, event_type, event_version, occurred_at, payload]
+      properties:
+        event_id:
+          type: string
+          example: 8ac1ef8fb98548fa9a7f30b6fc2e0ec1
+        event_type:
+          type: string
+          example: transfer.completed
+        event_version:
+          type: string
+          example: "1"
+        occurred_at:
+          type: string
+          format: date-time
+        trace_id:
+          type: string
+          nullable: true
+        key:
+          type: string
+          nullable: true
+        idempotency_key:
+          type: string
+          nullable: true
+    ClientStatus:
+      type: string
+      enum: [NEW, PENDING_VERIFICATION, ACTIVE, SUSPENDED, BLOCKED, CLOSED, ARCHIVED]
+    AccountStatus:
+      type: string
+      enum: [DRAFT, PENDING_APPROVAL, ACTIVE, PARTIALLY_RESTRICTED, BLOCKED, CLOSED]
+    CardStatus:
+      type: string
+      enum: [ORDERED, PERSONALIZED, ISSUED, ACTIVE, TEMP_BLOCKED, BLOCKED, EXPIRED, CLOSED]
+    TransferStatus:
+      type: string
+      enum: [DRAFT, CREATED, PENDING_ANTI_FRAUD, PENDING_EXECUTION, PROCESSING, COMPLETED, FAILED, CANCELLED, REVERSED]
+    TicketStatus:
+      type: string
+      enum: [NEW, IN_REVIEW, WAITING_FOR_CLIENT, WAITING_FOR_EMPLOYEE, RESOLVED, REJECTED, CLOSED]
+    StudentLoginPayload:
+      type: object
+      additionalProperties: false
+      required: [user_id, session_id, system_role]
+      properties:
+        user_id: { type: string }
+        session_id: { type: string }
+        system_role:
+          type: string
+          enum: [ADMIN, STUDENT]
+    StudentPasswordChangedPayload:
+      type: object
+      additionalProperties: false
+      required: [user_id, system_role]
+      properties:
+        user_id: { type: string }
+        system_role:
+          type: string
+          enum: [ADMIN, STUDENT]
+    EmployeeLifecyclePayload:
+      type: object
+      additionalProperties: false
+      required: [student_owner_id, employee_id]
+      properties:
+        student_owner_id: { type: string }
+        employee_id: { type: string }
+        deleted_client_ids:
+          type: array
+          items: { type: string }
+        deleted_client_users:
+          type: array
+          items: { type: string }
+    EmployeeGeneratedByStudentPayload:
+      type: object
+      additionalProperties: false
+      required: [employee_id, student_owner_id, run_id]
+      properties:
+        employee_id: { type: string }
+        student_owner_id: { type: string }
+        run_id: { type: string }
+    IamStudentCreatedPayload:
+      type: object
+      additionalProperties: false
+      required: [identity_id, user_id, username, system_role, services, bootstrap_password]
+      properties:
+        identity_id: { type: string }
+        user_id: { type: string }
+        username: { type: string }
+        system_role:
+          type: string
+          enum: [ADMIN, STUDENT]
+        services:
+          type: array
+          items:
+            type: string
+            enum: [POSTGRES, JENKINS, ALLURE, REST_API, REDIS, KAFKA]
+        bootstrap_password: { type: string }
+    ClientCreatedPayload:
+      type: object
+      additionalProperties: false
+      required: [id]
+      properties:
+        id: { type: string }
+    ClientCreatedByStudentPayload:
+      type: object
+      additionalProperties: false
+      required: [id, employee_id, student_owner_id]
+      properties:
+        id: { type: string }
+        employee_id: { type: string }
+        student_owner_id: { type: string }
+        run_id: { type: string }
+    ClientStatusChangedPayload:
+      type: object
+      additionalProperties: false
+      required: [id, status]
+      properties:
+        id: { type: string }
+        status:
+          $ref: '#/components/schemas/ClientStatus'
+    ClientStatusChangedByStudentPayload:
+      type: object
+      additionalProperties: false
+      required: [id, status, changed_by_student_id]
+      properties:
+        id: { type: string }
+        status:
+          $ref: '#/components/schemas/ClientStatus'
+        changed_by_student_id: { type: string }
+    ClientDeletedPayload:
+      type: object
+      additionalProperties: false
+      required: [id, hard_delete]
+      properties:
+        id: { type: string }
+        hard_delete: { type: boolean }
+    ClientDeletedByStudentPayload:
+      type: object
+      additionalProperties: false
+      required: [id, hard_delete, student_owner_id]
+      properties:
+        id: { type: string }
+        hard_delete: { type: boolean }
+        student_owner_id: { type: string }
+    AccountOpenedPayload:
+      type: object
+      additionalProperties: false
+      required: [id, client_id]
+      properties:
+        id: { type: string }
+        client_id: { type: string }
+    AccountOpenedByStudentPayload:
+      type: object
+      additionalProperties: false
+      required: [id, client_id, student_owner_id]
+      properties:
+        id: { type: string }
+        client_id: { type: string }
+        student_owner_id: { type: string }
+        run_id: { type: string }
+    AccountStatusChangedPayload:
+      type: object
+      additionalProperties: false
+      required: [id, status]
+      properties:
+        id: { type: string }
+        status:
+          $ref: '#/components/schemas/AccountStatus'
+    AccountStatusChangedByStudentPayload:
+      type: object
+      additionalProperties: false
+      required: [id, status, student_owner_id]
+      properties:
+        id: { type: string }
+        status:
+          $ref: '#/components/schemas/AccountStatus'
+        student_owner_id: { type: string }
+    AccountDeletedPayload:
+      type: object
+      additionalProperties: false
+      required: [id, client_id, hard_delete]
+      properties:
+        id: { type: string }
+        client_id: { type: string }
+        hard_delete: { type: boolean }
+    AccountDeletedByStudentPayload:
+      type: object
+      additionalProperties: false
+      required: [id, client_id, student_owner_id]
+      properties:
+        id: { type: string }
+        client_id: { type: string }
+        student_owner_id: { type: string }
+    CardIssuedPayload:
+      type: object
+      additionalProperties: false
+      required: [id, client_id]
+      properties:
+        id: { type: string }
+        client_id: { type: string }
+    CardStatusChangedPayload:
+      type: object
+      additionalProperties: false
+      required: [id, status]
+      properties:
+        id: { type: string }
+        status:
+          $ref: '#/components/schemas/CardStatus'
+    TransferStatePayload:
+      type: object
+      additionalProperties: false
+      required: [id, status]
+      properties:
+        id: { type: string }
+        status:
+          $ref: '#/components/schemas/TransferStatus'
+    ExchangeRateUpdatedByStudentPayload:
+      type: object
+      additionalProperties: false
+      required: [employee_id, quote_currency, rub_amount]
+      properties:
+        employee_id: { type: string }
+        quote_currency:
+          type: string
+          enum: [USD, EUR]
+        rub_amount: { type: number }
+    TicketCreatedPayload:
+      type: object
+      additionalProperties: false
+      required: [id, client_id]
+      properties:
+        id: { type: string }
+        client_id: { type: string }
+    TicketCreatedByStudentPayload:
+      type: object
+      additionalProperties: false
+      required: [ticket_id, client_id, student_owner_id]
+      properties:
+        ticket_id: { type: string }
+        client_id: { type: string }
+        student_owner_id: { type: string }
+        run_id: { type: string }
+    TicketUpdatedPayload:
+      type: object
+      additionalProperties: false
+      required: [id, status]
+      properties:
+        id: { type: string }
+        status:
+          $ref: '#/components/schemas/TicketStatus'
+    TicketAssignedByStudentPayload:
+      type: object
+      additionalProperties: false
+      required: [ticket_id, employee_id]
+      properties:
+        ticket_id: { type: string }
+        employee_id: { type: string }
+    TicketStatusUpdatedByStudentPayload:
+      type: object
+      additionalProperties: false
+      required: [ticket_id, status, employee_id]
+      properties:
+        ticket_id: { type: string }
+        status:
+          $ref: '#/components/schemas/TicketStatus'
+        employee_id: { type: string }
+    TicketMessageCreatedPayload:
+      type: object
+      additionalProperties: false
+      required: [ticket_id, id]
+      properties:
+        ticket_id: { type: string }
+        id: { type: string }
+    TicketMessageCreatedByStudentPayload:
+      type: object
+      additionalProperties: false
+      required: [ticket_id, message_id, student_owner_id]
+      properties:
+        ticket_id: { type: string }
+        message_id: { type: string }
+        author_type:
+          type: string
+          enum: [CLIENT, EMPLOYEE]
+        employee_id: { type: string }
+        student_owner_id: { type: string }
+        run_id: { type: string }
+    JenkinsJobRunPayload:
+      type: object
+      additionalProperties: false
+      required: [student_user_id, build_number, status, mode]
+      properties:
+        student_user_id: { type: string }
+        build_number: { type: integer }
+        status: { type: string }
+        mode:
+          type: string
+          enum: [mock, real]
+    UsageUpdatedPayload:
+      type: object
+      additionalProperties: false
+      required: [student_user_id, day_bucket, field, value]
+      properties:
+        student_user_id: { type: string }
+        day_bucket:
+          type: string
+          format: date
+        field:
+          type: string
+          enum:
+            - request_count
+            - ws_messages_count
+            - graphql_request_count
+            - grpc_request_count
+            - kafka_events_produced
+            - kafka_events_consumed
+            - created_entities_count
+            - updated_entities_count
+            - deleted_entities_count
+        value: { type: integer }
+    StudentScopedPayload:
+      type: object
+      additionalProperties: true
+      required: [student_user_id]
+      properties:
+        student_user_id: { type: string }
+        scope_student_ids:
+          type: array
+          items: { type: string }
+    AuditPayload:
+      type: object
+      additionalProperties: true
+  messages:
+    StudentLoginEvent:
+      name: studentLogin
+      title: Student Login Event
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/EventEnvelopeBase'
+          - type: object
+            properties:
+              event_type: { const: student.login }
+              payload:
+                $ref: '#/components/schemas/StudentLoginPayload'
+    StudentPasswordChangedEvent:
+      name: studentPasswordChanged
+      title: Student Password Changed Event
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/EventEnvelopeBase'
+          - type: object
+            properties:
+              event_type: { const: student.password.changed }
+              payload:
+                $ref: '#/components/schemas/StudentPasswordChangedPayload'
+    EmployeeLifecycleEvent:
+      name: employeeLifecycleByStudent
+      title: Employee Lifecycle Event
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/EventEnvelopeBase'
+          - type: object
+            properties:
+              event_type:
+                enum: [employee.blocked.by_student, employee.unblocked.by_student, employee.deleted.by_student]
+              payload:
+                $ref: '#/components/schemas/EmployeeLifecyclePayload'
+    EmployeeGeneratedByStudentEvent:
+      name: employeeGeneratedByStudent
+      title: Employee Generated By Student Event
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/EventEnvelopeBase'
+          - type: object
+            properties:
+              event_type: { const: employee.generated.by_student }
+              payload:
+                $ref: '#/components/schemas/EmployeeGeneratedByStudentPayload'
+    IamStudentCreatedEvent:
+      name: iamStudentCreated
+      title: IAM Student Created Event
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/EventEnvelopeBase'
+          - type: object
+            properties:
+              event_type: { const: student.created }
+              payload:
+                $ref: '#/components/schemas/IamStudentCreatedPayload'
+    ClientCreatedEvent:
+      name: clientCreated
+      title: Client Created Event
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/EventEnvelopeBase'
+          - type: object
+            properties:
+              event_type: { const: client.created }
+              payload:
+                $ref: '#/components/schemas/ClientCreatedPayload'
+    ClientCreatedByStudentEvent:
+      name: clientCreatedByStudent
+      title: Client Created By Student Event
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/EventEnvelopeBase'
+          - type: object
+            properties:
+              event_type: { const: client.created.by_student }
+              payload:
+                $ref: '#/components/schemas/ClientCreatedByStudentPayload'
+    ClientStatusChangedEvent:
+      name: clientStatusChanged
+      title: Client Status Changed Event
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/EventEnvelopeBase'
+          - type: object
+            properties:
+              event_type:
+                enum: [client.active, client.suspended, client.blocked]
+              payload:
+                $ref: '#/components/schemas/ClientStatusChangedPayload'
+    ClientStatusChangedByStudentEvent:
+      name: clientStatusChangedByStudent
+      title: Client Status Changed By Student Event
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/EventEnvelopeBase'
+          - type: object
+            properties:
+              event_type:
+                enum: [client.active.by_student, client.suspended.by_student, client.blocked.by_student]
+              payload:
+                $ref: '#/components/schemas/ClientStatusChangedByStudentPayload'
+    ClientDeletedEvent:
+      name: clientDeleted
+      title: Client Deleted Event
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/EventEnvelopeBase'
+          - type: object
+            properties:
+              event_type: { const: client.deleted }
+              payload:
+                $ref: '#/components/schemas/ClientDeletedPayload'
+    ClientDeletedByStudentEvent:
+      name: clientDeletedByStudent
+      title: Client Deleted By Student Event
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/EventEnvelopeBase'
+          - type: object
+            properties:
+              event_type: { const: client.deleted.by_student }
+              payload:
+                $ref: '#/components/schemas/ClientDeletedByStudentPayload'
+    AccountOpenedEvent:
+      name: accountOpened
+      title: Account Opened Event
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/EventEnvelopeBase'
+          - type: object
+            properties:
+              event_type: { const: account.opened }
+              payload:
+                $ref: '#/components/schemas/AccountOpenedPayload'
+    AccountOpenedByStudentEvent:
+      name: accountOpenedByStudent
+      title: Account Opened By Student Event
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/EventEnvelopeBase'
+          - type: object
+            properties:
+              event_type: { const: account.opened.by_student }
+              payload:
+                $ref: '#/components/schemas/AccountOpenedByStudentPayload'
+    AccountStatusChangedEvent:
+      name: accountStatusChanged
+      title: Account Status Changed Event
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/EventEnvelopeBase'
+          - type: object
+            properties:
+              event_type:
+                enum: [account.active, account.blocked, account.closed]
+              payload:
+                $ref: '#/components/schemas/AccountStatusChangedPayload'
+    AccountStatusChangedByStudentEvent:
+      name: accountStatusChangedByStudent
+      title: Account Status Changed By Student Event
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/EventEnvelopeBase'
+          - type: object
+            properties:
+              event_type:
+                enum: [account.active.by_student, account.blocked.by_student, account.closed.by_student]
+              payload:
+                $ref: '#/components/schemas/AccountStatusChangedByStudentPayload'
+    AccountDeletedEvent:
+      name: accountDeleted
+      title: Account Deleted Event
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/EventEnvelopeBase'
+          - type: object
+            properties:
+              event_type: { const: account.deleted }
+              payload:
+                $ref: '#/components/schemas/AccountDeletedPayload'
+    AccountDeletedByStudentEvent:
+      name: accountDeletedByStudent
+      title: Account Deleted By Student Event
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/EventEnvelopeBase'
+          - type: object
+            properties:
+              event_type: { const: account.deleted.by_student }
+              payload:
+                $ref: '#/components/schemas/AccountDeletedByStudentPayload'
+    CardIssuedEvent:
+      name: cardIssued
+      title: Card Issued Event
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/EventEnvelopeBase'
+          - type: object
+            properties:
+              event_type: { const: card.issued }
+              payload:
+                $ref: '#/components/schemas/CardIssuedPayload'
+    CardStatusChangedEvent:
+      name: cardStatusChanged
+      title: Card Status Changed Event
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/EventEnvelopeBase'
+          - type: object
+            properties:
+              event_type:
+                enum: [card.active, card.temp_blocked, card.blocked, card.closed]
+              payload:
+                $ref: '#/components/schemas/CardStatusChangedPayload'
+    TransferCompletedEvent:
+      name: transferCompleted
+      title: Transfer Completed Event
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/EventEnvelopeBase'
+          - type: object
+            properties:
+              event_type: { const: transfer.completed }
+              payload:
+                $ref: '#/components/schemas/TransferStatePayload'
+    TransferCancelledEvent:
+      name: transferCancelled
+      title: Transfer Cancelled Event
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/EventEnvelopeBase'
+          - type: object
+            properties:
+              event_type: { const: transfer.cancelled }
+              payload:
+                $ref: '#/components/schemas/TransferStatePayload'
+    TransferReversedEvent:
+      name: transferReversed
+      title: Transfer Reversed Event
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/EventEnvelopeBase'
+          - type: object
+            properties:
+              event_type: { const: transfer.reversed }
+              payload:
+                $ref: '#/components/schemas/TransferStatePayload'
+    ExchangeRateUpdatedByStudentEvent:
+      name: exchangeRateUpdatedByStudent
+      title: Exchange Rate Updated By Student Event
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/EventEnvelopeBase'
+          - type: object
+            properties:
+              event_type: { const: exchange-rate.updated.by_student }
+              payload:
+                $ref: '#/components/schemas/ExchangeRateUpdatedByStudentPayload'
+    TicketCreatedEvent:
+      name: ticketCreated
+      title: Ticket Created Event
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/EventEnvelopeBase'
+          - type: object
+            properties:
+              event_type: { const: ticket.created }
+              payload:
+                $ref: '#/components/schemas/TicketCreatedPayload'
+    TicketCreatedByStudentEvent:
+      name: ticketCreatedByStudent
+      title: Ticket Created By Student Event
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/EventEnvelopeBase'
+          - type: object
+            properties:
+              event_type: { const: ticket.created.by_student }
+              payload:
+                $ref: '#/components/schemas/TicketCreatedByStudentPayload'
+    TicketUpdatedEvent:
+      name: ticketUpdated
+      title: Ticket Updated Event
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/EventEnvelopeBase'
+          - type: object
+            properties:
+              event_type: { const: ticket.updated }
+              payload:
+                $ref: '#/components/schemas/TicketUpdatedPayload'
+    TicketAssignedByStudentEvent:
+      name: ticketAssignedByStudent
+      title: Ticket Assigned By Student Event
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/EventEnvelopeBase'
+          - type: object
+            properties:
+              event_type: { const: ticket.assigned.by_student }
+              payload:
+                $ref: '#/components/schemas/TicketAssignedByStudentPayload'
+    TicketStatusUpdatedByStudentEvent:
+      name: ticketStatusUpdatedByStudent
+      title: Ticket Status Updated By Student Event
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/EventEnvelopeBase'
+          - type: object
+            properties:
+              event_type: { const: ticket.status.updated.by_student }
+              payload:
+                $ref: '#/components/schemas/TicketStatusUpdatedByStudentPayload'
+    TicketMessageCreatedEvent:
+      name: ticketMessageCreated
+      title: Ticket Message Created Event
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/EventEnvelopeBase'
+          - type: object
+            properties:
+              event_type: { const: ticket.message.created }
+              payload:
+                $ref: '#/components/schemas/TicketMessageCreatedPayload'
+    TicketMessageCreatedByStudentEvent:
+      name: ticketMessageCreatedByStudent
+      title: Ticket Message Created By Student Event
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/EventEnvelopeBase'
+          - type: object
+            properties:
+              event_type: { const: ticket.message.created.by_student }
+              payload:
+                $ref: '#/components/schemas/TicketMessageCreatedByStudentPayload'
+    JenkinsJobRunEvent:
+      name: jenkinsJobRun
+      title: Jenkins Job Run Event
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/EventEnvelopeBase'
+          - type: object
+            properties:
+              event_type: { const: jenkins.job.run }
+              payload:
+                $ref: '#/components/schemas/JenkinsJobRunPayload'
+    UsageUpdatedEvent:
+      name: usageUpdated
+      title: Usage Updated Event
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/EventEnvelopeBase'
+          - type: object
+            properties:
+              event_type: { const: usage.updated }
+              payload:
+                $ref: '#/components/schemas/UsageUpdatedPayload'
+    AuditMirroredEvent:
+      name: auditMirroredEvent
+      title: Audit Mirrored Event
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/EventEnvelopeBase'
+          - type: object
+            properties:
+              event_type:
+                type: string
+                pattern: '^audit\\..+'
+              payload:
+                $ref: '#/components/schemas/AuditPayload'
+    StudentScopedEvent:
+      name: studentScopedEvent
+      title: Student Scoped Event
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/EventEnvelopeBase'
+          - type: object
+            properties:
+              payload:
+                $ref: '#/components/schemas/StudentScopedPayload'

@@ -1063,8 +1063,8 @@ def student_tool_meta(service_name: str, host: str) -> dict:
         },
         "KAFKA": {
             "title": "Kafka",
-            "url": None,
-            "hint": f"Kafka broker checks via CLI. Bootstrap: {host}:9092 (or kafka:9092 in docker network).",
+            "url": f"http://{host}:8090/",
+            "hint": f"Kafka broker checks via CLI. Bootstrap: {host}:9092 (or kafka:9092 in docker network). AsyncAPI docs: http://{host}:8090/.",
         },
     }
     return mapping.get(service_name, {"title": service_name, "url": None, "hint": "Service is not documented"})

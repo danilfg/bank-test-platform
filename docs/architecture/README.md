@@ -26,7 +26,7 @@ The architecture is split into layered zones so students can map each operation 
    - `PostgreSQL` for persistent transactional data.
    - `Redis` for cache/session and transient coordination.
    - `Kafka` for asynchronous event streaming.
-   - `Kafka UI` for event/topic inspection.
+   - `AsyncAPI` for Kafka topic and event contract documentation.
    - `Jenkins` for CI job execution.
    - `Swagger / OpenAPI` for API contract and docs.
 
@@ -48,7 +48,7 @@ The architecture is split into layered zones so students can map each operation 
 - `REST API -> PostgreSQL`
 - `REST API -> Redis`
 - `REST API -> Kafka`
-- `Kafka -> Kafka UI`
+- `Kafka -> AsyncAPI docs`
 - `Jenkins -> API`
 - `Swagger -> API`
 
