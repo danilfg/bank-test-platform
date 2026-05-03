@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>EasyBank AsyncAPI</title>
+    <link
+      rel="stylesheet"
+      href="/assets/asyncapi.css"
+    />
+    <style>
+      :root {
+        color-scheme: light;
+        --page-bg: #f4efe7;
+        --panel-bg: #fffdf8;
+        --ink: #1f2328;
+        --muted: #5c6570;
+        --accent: #bd4b22;
+        --border: #e6d9c9;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at top right, rgba(189, 75, 34, 0.08), transparent 28%),
+          linear-gradient(180deg, #fbf7f1 0%, var(--page-bg) 100%);
+      }
+
+      .hero {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 28px 24px 18px;
+      }
+
+      .eyebrow {
+        display: inline-block;
+        margin-bottom: 10px;
+        padding: 6px 10px;
+        border: 1px solid rgba(189, 75, 34, 0.18);
+        border-radius: 999px;
+        background: rgba(189, 75, 34, 0.08);
+        color: var(--accent);
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(32px, 4vw, 52px);
+        line-height: 1.03;
+      }
+
+      .lead {
+        max-width: 760px;
+        margin: 14px 0 0;
+        color: var(--muted);
+        font-size: 18px;
+        line-height: 1.55;
+      }
+
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 18px;
+      }
+
+      .meta a,
+      .meta span {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 14px;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.72);
+        color: var(--ink);
+        text-decoration: none;
+        backdrop-filter: blur(6px);
+      }
+
+      .intro {
+        max-width: 860px;
+        margin-top: 24px;
+        color: var(--ink);
+      }
+
+      .intro p {
+        margin: 0 0 14px;
+        font-size: 17px;
+        line-height: 1.55;
+      }
+
+      .intro a {
+        color: #2c6bed;
+        text-decoration: underline;
+      }
+
+      .intro h2 {
+        margin: 28px 0 12px;
+        font-size: 28px;
+        line-height: 1.1;
+      }
+
+      .intro code,
+      .intro pre {
+        font-family: "SFMono-Regular", SFMono-Regular, Menlo, Consolas, monospace;
+      }
+
+      .inline-code {
+        display: inline-block;
+        padding: 6px 10px;
+        border-radius: 10px;
+        background: rgba(137, 87, 255, 0.1);
+        color: #7a34f6;
+        font-weight: 700;
+      }
+
+      .intro ol {
+        margin: 0;
+        padding-left: 28px;
+      }
+
+      .intro li {
+        margin-bottom: 16px;
+        font-size: 17px;
+        line-height: 1.55;
+      }
+
+      .intro pre {
+        margin: 10px 0 0;
+        padding: 14px 16px;
+        overflow-x: auto;
+        border-radius: 14px;
+        background: rgba(137, 87, 255, 0.08);
+        color: #7a34f6;
+        font-size: 14px;
+        font-weight: 700;
+        white-space: pre-wrap;
+      }
+
+      .shell {
+        max-width: 1200px;
+        margin: 0 auto 32px;
+        padding: 0 24px 24px;
+      }
+
+      .frame {
+        overflow: hidden;
+        border: 1px solid var(--border);
+        border-radius: 24px;
+        background: var(--panel-bg);
+        box-shadow: 0 24px 80px rgba(35, 26, 16, 0.08);
+      }
+
+      #loading,
+      #error {
+        padding: 28px;
+        color: var(--muted);
+      }
+
+      #error {
+        color: #8a1f11;
+      }
+    </style>
+  </head>
+  <body>
+    <section class="hero">
+      <div class="eyebrow">AsyncAPI for Kafka</div>
+      <h1>EasyBank Event Contract</h1>
+      <p class="lead">
+        This page is the Kafka/event equivalent of Swagger. It documents the local broker,
+        event envelope, topics, event types, and payload schemas used by EasyITLab Bank.
+      </p>
+      <div class="meta">
+        <span>Broker: <strong>127.0.0.1:9092</strong></span>
+        <a href="/asyncapi.yaml">Raw asyncapi.yaml</a>
+        <a href="http://127.0.0.1:8080/docs">OpenAPI / Swagger</a>
+      </div>
+      <div class="intro">
+        <p>Developed by Daniil Nikolaev</p>
+        <p>
+          Cloud version of the platform for QA, backend, and DevOps practice with all 10+ tools -
+          <a href="https://bank.easyitlab.tech" target="_blank" rel="noreferrer">bank.easyitlab.tech</a>
+        </p>
+        <p>
+          Contact via email
+          <a href="mailto:easyitwithdaniil@gmail.com">easyitwithdaniil@gmail.com</a>
+          or Telegram
+          <a href="https://t.me/danilfg" target="_blank" rel="noreferrer">@danilfg</a>
+        </p>
+        <p>
+          Join the community:
+          <a href="https://chat.easyitlab.tech" target="_blank" rel="noreferrer">chat.easyitlab.tech</a>
+        </p>
+
+        <h2>Broker Endpoints</h2>
+        <p><span class="inline-code">127.0.0.1:9092</span> for local clients</p>
+        <p><span class="inline-code">kafka:9092</span> for containers inside docker-compose</p>
+
+        <h2>Documentation URLs</h2>
+        <p><span class="inline-code">http://127.0.0.1:8090/</span> AsyncAPI HTML docs</p>
+        <p><span class="inline-code">http://127.0.0.1:8090/asyncapi.yaml</span> raw specification</p>
+
+        <h2>What Is Documented Here</h2>
+        <ol>
+          <li>
+            Kafka topics used by the platform: auth, IAM, client, account, card, transfer, support, usage, audit, and student event streams.
+          </li>
+          <li>
+            Shared event envelope fields such as <span class="inline-code">event_id</span>, <span class="inline-code">event_type</span>, <span class="inline-code">occurred_at</span>, <span class="inline-code">payload</span>, and Kafka <span class="inline-code">key</span>.
+          </li>
+          <li>
+            Event payload schemas and examples for messages like <span class="inline-code">student.login</span>, <span class="inline-code">client.created</span>, <span class="inline-code">account.opened</span>, and <span class="inline-code">transfer.completed</span>.
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <main class="shell">
+      <div class="frame">
+        <div id="loading">Loading AsyncAPI specification...</div>
+        <div id="error" hidden></div>
+        <div id="asyncapi"></div>
+      </div>
+    </main>
+
+    <script src="/assets/asyncapi.js"></script>
+    <script>
+      async function renderAsyncApi() {
+        const loading = document.getElementById("loading");
+        const error = document.getElementById("error");
+        const container = document.getElementById("asyncapi");
+
+        try {
+          const response = await fetch("/asyncapi.yaml");
+          if (!response.ok) {
+            throw new Error("Failed to fetch asyncapi.yaml");
+          }
+
+          const schema = await response.text();
+          loading.hidden = true;
+          AsyncApiStandalone.render(
+            {
+              schema,
+              config: {
+                show: {
+                  sidebar: true,
+                },
+              },
+            },
+            container,
+          );
+        } catch (err) {
+          loading.hidden = true;
+          error.hidden = false;
+          error.textContent = "Unable to render AsyncAPI docs: " + err.message;
+        }
+      }
+
+      renderAsyncApi();
+    </script>
+  </body>
+</html>

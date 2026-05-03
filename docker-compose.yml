@@ -150,6 +150,19 @@ services:
       - api-gateway
     networks: [backend]
 
+  asyncapi:
+    build:
+      context: .
+      dockerfile: infra/asyncapi/Dockerfile
+    ports:
+      - "${HOST_BIND_IP:-127.0.0.1}:${ASYNCAPI_PORT:-8090}:80"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/ || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+    networks: [backend]
+
 volumes:
   postgres_data:
   jenkins_data:
