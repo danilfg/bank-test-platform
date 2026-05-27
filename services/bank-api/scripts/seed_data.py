@@ -27,8 +27,8 @@ from common.models import (
 )
 from common.security import hash_password
 
-STUDENT_EMAIL = "student@easyitlab.tech"
-STUDENT_PASSWORD = "student123"
+STUDENT_EMAIL = os.getenv("DEMO_STUDENT_EMAIL", "student@easyitlab.tech")
+STUDENT_PASSWORD = os.getenv("DEMO_STUDENT_PASSWORD", "student123")
 
 
 def _build_bank() -> Bank:

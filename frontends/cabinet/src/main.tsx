@@ -73,6 +73,17 @@ type AllureOpenUrlResult = {
   mode: "report" | "job";
 };
 
+type JenkinsRepository = {
+  service_name: string;
+  repository_url: string;
+  branch_name: string;
+  jenkinsfile_path: string;
+  job_name: string;
+  job_url?: string | null;
+  branch_job_url?: string | null;
+  mode: string;
+};
+
 type Profile = {
   id: string;
   username: string;
@@ -314,6 +325,19 @@ const API_TIMEOUT_MS = 15000;
 const TRAINING_STUDENT_LOGIN = "student@easyitlab.tech";
 const TRAINING_STUDENT_PASSWORD = "student123";
 const ALLOWED_TOOL_SERVICES = new Set<ToolService>(["JENKINS", "ALLURE", "POSTGRES", "REST_API", "REDIS", "KAFKA"]);
+const DEFAULT_JENKINS_REPOSITORY_URL = "https://github.com/danilfg/easybank-jenkins-example-pipeline.git";
+const LEGACY_JENKINS_REPOSITORY_URL = "https://github.com/danilfg/bank-test-platform-tests.git";
+
+function normalizeJenkinsRepositoryUrl(url: string): string {
+  const trimmed = url.trim();
+  if (!trimmed) {
+    return DEFAULT_JENKINS_REPOSITORY_URL;
+  }
+  if (trimmed === LEGACY_JENKINS_REPOSITORY_URL) {
+    return DEFAULT_JENKINS_REPOSITORY_URL;
+  }
+  return trimmed;
+}
 
 const TOOL_MAP: Record<ToolService, ToolMeta> = {
   REST_API: {
@@ -709,6 +733,11 @@ function App() {
   const [notice, setNotice] = useState("");
   const [toolRouteDenied, setToolRouteDenied] = useState("");
   const [busy, setBusy] = useState(false);
+  const [jenkinsRepository, setJenkinsRepository] = useState<JenkinsRepository | null>(null);
+  const [jenkinsRepositoryUrl, setJenkinsRepositoryUrl] = useState(DEFAULT_JENKINS_REPOSITORY_URL);
+  const [jenkinsBranchName, setJenkinsBranchName] = useState("main");
+  const [jenkinsSaving, setJenkinsSaving] = useState(false);
+  const [jenkinsLoading, setJenkinsLoading] = useState(false);
 
   const [clientSearch, setClientSearch] = useState("");
   const [clientStatusFilter, setClientStatusFilter] = useState("");
@@ -2173,6 +2202,53 @@ function App() {
     return activeToolsByService.get(selectedToolService) || null;
   }, [selectedToolService, activeToolsByService]);
 
+  async function loadJenkinsRepository(currentToken = token): Promise<void> {
+    if (!currentToken) {
+      return;
+    }
+    setJenkinsLoading(true);
+    try {
+      const payload = await api<JenkinsRepository>("/students/jenkins/repository", {}, currentToken);
+      setJenkinsRepository(payload);
+      setJenkinsRepositoryUrl(normalizeJenkinsRepositoryUrl(payload.repository_url || ""));
+      setJenkinsBranchName(payload.branch_name || "main");
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : String(error));
+    } finally {
+      setJenkinsLoading(false);
+    }
+  }
+
+  async function saveJenkinsRepository(): Promise<void> {
+    if (!token) {
+      setNotice(t("Сначала войдите в кабинет студента.", "Sign in to the student cabinet first."));
+      return;
+    }
+    setJenkinsSaving(true);
+    try {
+      const payload = await api<JenkinsRepository>(
+        "/students/jenkins/repository",
+        {
+          method: "PATCH",
+          body: JSON.stringify({
+            repository_url: normalizeJenkinsRepositoryUrl(jenkinsRepositoryUrl),
+            branch_name: jenkinsBranchName.trim() || "main",
+            jenkinsfile_path: "Jenkinsfile",
+          }),
+        },
+        token,
+      );
+      setJenkinsRepository(payload);
+      setJenkinsRepositoryUrl(normalizeJenkinsRepositoryUrl(payload.repository_url || ""));
+      setJenkinsBranchName(payload.branch_name || "main");
+      setNotice(t("Jenkins job настроена. Откройте Jenkins, выполните scan/build и смотрите Allure artifact.", "Jenkins job is configured. Open Jenkins, run scan/build, and inspect the Allure artifact."));
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : String(error));
+    } finally {
+      setJenkinsSaving(false);
+    }
+  }
+
   useEffect(() => {
     if (!token || !selectedToolService) {
       setToolRouteDenied("");
@@ -2193,6 +2269,12 @@ function App() {
     return () => {
       cancelled = true;
     };
+  }, [token, selectedToolService]);
+
+  useEffect(() => {
+    if (token && selectedToolService === "JENKINS") {
+      void loadJenkinsRepository(token);
+    }
   }, [token, selectedToolService]);
 
   const createPractice = (...tasks: Omit<ToolPracticeTask, "id">[]): ToolPracticeTask[] =>
@@ -3091,30 +3173,20 @@ function App() {
     if (service === "JENKINS") {
       return {
         summary: [
-          t("Jenkins запускает automation job/pipeline и хранит историю запусков.", "Jenkins runs automation jobs/pipelines and stores build history."),
-          t("Каждый build содержит статус, console logs, артефакты и ссылку на отчет.", "Each build includes status, console logs, artifacts, and report link."),
-          t("Allure используется для визуализации результатов автотестов.", "Allure is used to visualize automated test results."),
-          t("Для CI-практики рекомендуется хранить pipeline как код (Jenkinsfile).", "For CI practice, keep the pipeline as code (Jenkinsfile)."),
+          t("Jenkins запускает pipeline, который берёт код из Git и выполняет автотесты.", "Jenkins runs a pipeline that pulls code from Git and executes automated tests."),
+          t("В Open Source режиме студент сохраняет репозиторий один раз, а затем запускает scan и build локальной Multibranch job.", "In Open Source mode, the student saves the repository once and then runs scan and build in the local Multibranch job."),
+          t("Allure показывает результаты прогонов внутри Jenkins build.", "Allure shows run results inside the Jenkins build."),
+          t("Ветка и Jenkinsfile уже лежат в репозитории, поэтому job не нужно собирать вручную через UI.", "The branch and Jenkinsfile live in the repository, so the job does not need to be assembled manually in the UI."),
         ],
-        connection: [
-          t(`URL Jenkins: ${TOOL_MAP.JENKINS.url || "-"}.`, `Jenkins URL: ${TOOL_MAP.JENKINS.url || "-"}.`),
-          t("Откройте Jenkins кнопкой 'Открыть инструмент'.", "Open Jenkins via the 'Open tool' button."),
-          t(`Логин: ${TRAINING_STUDENT_LOGIN}, пароль: ${TRAINING_STUDENT_PASSWORD}.`, `Login: ${TRAINING_STUDENT_LOGIN}, password: ${TRAINING_STUDENT_PASSWORD}.`),
-          t("Для запуска тестов из GitHub используйте job training-github-allure.", "Use training-github-allure job to run tests from GitHub."),
-        ],
+        connection: [],
         auth: [],
         isolation: [],
         practice: buildToolPractice(service),
         examples: [
           {
-            title: t("Пример Jenkinsfile (Pipeline)", "Jenkinsfile example (Pipeline)"),
+            title: t("Простой Jenkinsfile в репозитории", "Simple Jenkinsfile in the repository"),
             language: "groovy",
-            code: `pipeline {\n  agent any\n  stages {\n    stage('Checkout') {\n      steps {\n        checkout scm\n      }\n    }\n    stage('Tests') {\n      steps {\n        sh 'pytest -q --alluredir=allure-results'\n      }\n    }\n    stage('Allure') {\n      steps {\n        sh 'allure generate allure-results -o allure-report --clean'\n      }\n    }\n  }\n}`,
-          },
-          {
-            title: t("Пример shell step", "Shell step example"),
-            language: "bash",
-            code: "pytest -q --alluredir=allure-results",
+            code: `pipeline {\n  agent any\n  environment {\n    TEST_API_BASE_URL = 'http://api-gateway:8080'\n  }\n  stages {\n    stage('Install') {\n      steps { sh 'python3 -m pip install -r requirements.txt || true' }\n    }\n    stage('Tests') {\n      steps { sh 'pytest -q --alluredir=allure-results' }\n    }\n    stage('Allure HTML') {\n      steps {\n        sh '''\n          curl -fsSL https://github.com/allure-framework/allure2/releases/download/2.30.0/allure-2.30.0.tgz -o /tmp/allure.tgz\n          tar -xzf /tmp/allure.tgz -C /tmp\n          /tmp/allure-2.30.0/bin/allure generate allure-results -o allure-report --clean\n        '''\n      }\n    }\n  }\n  post {\n    always { archiveArtifacts artifacts: 'allure-results/**,allure-report/**', allowEmptyArchive: true }\n  }\n}`,
           },
         ],
       };
@@ -3562,6 +3634,106 @@ function App() {
             </>
           )}
         </div>
+
+        {selectedToolService === "JENKINS" && (
+          <div className="bg-white rounded-2xl border border-border p-5 space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">{t("Jenkins: репозиторий автотестов", "Jenkins: test repository")}</h3>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {t("Укажите публичный GitHub repository. Open Source стенд настроит локальную Multibranch job, а Jenkins прочитает Jenkinsfile из корня репозитория.", "Enter a public GitHub repository. The Open Source stack configures a local Multibranch job, and Jenkins reads Jenkinsfile from the repository root.")}
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  className="inline-flex items-center justify-center rounded-md border border-border bg-white px-3 py-2 text-sm font-medium text-foreground shadow-sm hover:bg-muted gap-2 disabled:opacity-60"
+                  onClick={() => void loadJenkinsRepository()}
+                  disabled={jenkinsLoading || !token}
+                >
+                  <RefreshCw className={cx("w-4 h-4", jenkinsLoading ? "animate-spin" : "")} />
+                  {t("Обновить", "Refresh")}
+                </button>
+                <button
+                  className="inline-flex items-center justify-center rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 gap-2"
+                  onClick={() => void openTool("JENKINS")}
+                >
+                  <Building2 className="w-4 h-4" />
+                  {t("Открыть Jenkins", "Open Jenkins")}
+                </button>
+              </div>
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-3">
+              <div className="rounded-xl border border-border p-4">
+                <div className="text-sm font-semibold text-foreground">{t("1. Вставьте свой repository", "1. Paste your repository")}</div>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {t("Укажите публичный GitHub repository со своим Jenkinsfile и тестами.", "Paste your public GitHub repository with Jenkinsfile and tests.")}
+                </p>
+              </div>
+              <div className="rounded-xl border border-border p-4">
+                <div className="text-sm font-semibold text-foreground">{t("2. Сохраните job", "2. Save the job")}</div>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {t("Нажмите Настроить job, чтобы стенд сохранил репозиторий и подготовил Multibranch Pipeline job.", "Click Configure job so the stack saves the repository and prepares the Multibranch Pipeline job.")}
+                </p>
+              </div>
+              <div className="rounded-xl border border-border p-4">
+                <div className="text-sm font-semibold text-foreground">{t("3. Запустите Jenkins job", "3. Run the Jenkins job")}</div>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {t("Перейдите в Jenkins, выполните Scan Multibranch Pipeline Now и запустите branch job через Build with Parameters.", "Go to Jenkins, run Scan Multibranch Pipeline Now, and start the branch job through Build with Parameters.")}
+                </p>
+              </div>
+            </div>
+            <div className="text-xs text-muted-foreground">
+              {t("Разрешены только публичные GitHub HTTPS repositories и Jenkinsfile в корне.", "Only public GitHub HTTPS repositories and Jenkinsfile in the root are allowed.")}
+            </div>
+
+            <div className="space-y-3">
+              <label className="block">
+                <span className="text-xs font-medium text-muted-foreground">{t("GitHub repository URL", "GitHub repository URL")}</span>
+                <input
+                  className="mt-1 w-full rounded-md border border-border bg-white px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
+                  value={jenkinsRepositoryUrl}
+                  onChange={(event) => setJenkinsRepositoryUrl(event.target.value)}
+                  placeholder={DEFAULT_JENKINS_REPOSITORY_URL}
+                />
+              </label>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="block">
+                  <span className="text-xs font-medium text-muted-foreground">{t("Branch", "Branch")}</span>
+                  <input
+                    className="mt-1 w-full rounded-md border border-border bg-white px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
+                    value={jenkinsBranchName}
+                    onChange={(event) => setJenkinsBranchName(event.target.value)}
+                    placeholder="main"
+                  />
+                </label>
+                <label className="block">
+                  <span className="text-xs font-medium text-muted-foreground">{t("Jenkinsfile path", "Jenkinsfile path")}</span>
+                  <input
+                    className="mt-1 w-full rounded-md border border-border bg-muted px-3 py-2 text-sm text-muted-foreground"
+                    value="Jenkinsfile"
+                    readOnly
+                  />
+                </label>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  className="inline-flex items-center justify-center rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 gap-2 disabled:opacity-60"
+                  onClick={() => void saveJenkinsRepository()}
+                  disabled={jenkinsSaving || !jenkinsRepositoryUrl.trim()}
+                >
+                  <GitBranch className="w-4 h-4" />
+                  {jenkinsSaving ? t("Настраиваем...", "Configuring...") : t("Настроить job", "Configure job")}
+                </button>
+                {jenkinsRepository?.job_url ? (
+                  <a className="text-xs text-primary hover:underline break-all" href={jenkinsRepository.job_url} target="_blank" rel="noreferrer">
+                    {jenkinsRepository.job_url}
+                  </a>
+                ) : null}
+              </div>
+            </div>
+          </div>
+        )}
 
         {guide.examples && guide.examples.length > 0 && (
           <div className="bg-white rounded-2xl border border-border p-5">

@@ -1,5 +1,7 @@
 FROM jenkins/jenkins:lts-jdk17
 
+ARG JENKINS_INSTALL_PLUGINS=false
+
 USER root
 
 RUN apt-get update \
@@ -16,4 +18,17 @@ RUN apt-get update \
 
 USER jenkins
 
-RUN jenkins-plugin-cli --plugins locale
+RUN if [ "${JENKINS_INSTALL_PLUGINS}" = "true" ]; then \
+      jenkins-plugin-cli --plugins \
+        git \
+        allure-jenkins-plugin \
+        branch-api \
+        cloudbees-folder \
+        locale \
+        matrix-auth \
+        matrix-project \
+        workflow-aggregator \
+        workflow-multibranch; \
+    else \
+      jenkins-plugin-cli --plugins locale; \
+    fi

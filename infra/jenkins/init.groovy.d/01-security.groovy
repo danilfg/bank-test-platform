@@ -1,5 +1,5 @@
-import hudson.security.FullControlOnceLoggedInAuthorizationStrategy
 import hudson.security.HudsonPrivateSecurityRealm
+import hudson.security.Permission
 import jenkins.model.Jenkins
 
 def instance = Jenkins.get()
@@ -12,16 +12,29 @@ if (!(realm instanceof HudsonPrivateSecurityRealm)) {
   instance.setSecurityRealm(realm)
 }
 
-if (realm.getUser(adminUser) == null) {
-  realm.createAccount(adminUser, adminPassword)
+def existingAdmin = realm.getUser(adminUser)
+if (existingAdmin != null) {
+  def user = hudson.model.User.getById(adminUser, false)
+  if (user != null) {
+    user.delete()
+  }
 }
+realm.createAccount(adminUser, adminPassword)
 
-def strategy = instance.getAuthorizationStrategy()
-if (!(strategy instanceof FullControlOnceLoggedInAuthorizationStrategy)) {
-  def auth = new FullControlOnceLoggedInAuthorizationStrategy()
-  auth.setAllowAnonymousRead(false)
-  instance.setAuthorizationStrategy(auth)
+try {
+  def strategyClass = Class.forName("hudson.security.ProjectMatrixAuthorizationStrategy")
+  def strategy = strategyClass.newInstance()
+  [Jenkins.ADMINISTER, Jenkins.READ].each { Permission permission ->
+    strategy.add(permission, adminUser)
+  }
+  strategy.add(Jenkins.READ, "authenticated")
+  instance.setAuthorizationStrategy(strategy)
+} catch (Throwable error) {
+  def fallbackClass = Class.forName("hudson.security.FullControlOnceLoggedInAuthorizationStrategy")
+  def fallback = fallbackClass.newInstance()
+  fallback.setAllowAnonymousRead(false)
+  instance.setAuthorizationStrategy(fallback)
 }
 
 instance.save()
-println("Jenkins bootstrap completed")
+println("Jenkins security bootstrap completed")
