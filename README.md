@@ -297,6 +297,37 @@ Default student credentials:
 - Email: `student@easyitlab.tech`
 - Password: `student123`
 
+These values come from `.env`:
+
+- `DEMO_STUDENT_EMAIL`
+- `DEMO_STUDENT_PASSWORD`
+- `JENKINS_ADMIN_USER`
+- `JENKINS_ADMIN_PASSWORD`
+
+For local development they default to the same demo student. Keep real passwords only in your local `.env`; `.env.example` contains demo-only values.
+
+## Local Jenkins
+
+Jenkins is intentionally local in this Open Source edition. There is no admin panel and no student provisioning. The demo student logs in to Jenkins with the credentials from `.env`, and the preconfigured job runs against Docker Compose service names.
+
+- URL: `http://127.0.0.1:8086/`
+- Login: value of `JENKINS_ADMIN_USER`
+- Password: value of `JENKINS_ADMIN_PASSWORD`
+- Job: `training-github-allure` (`Multibranch Pipeline`)
+- API base URL inside Jenkins: `http://api-gateway:8080`
+
+Run a job:
+
+1. Open `http://127.0.0.1:8086/job/training-github-allure/`.
+2. If needed, open the Jenkins section in Student Cabinet and save a public GitHub repository with `Jenkinsfile` in the root.
+3. Click `Scan Multibranch Pipeline Now`.
+4. Open the branch job, for example `main`.
+5. Click `Build with Parameters`.
+6. Keep or adjust `TEST_STUDENT_EMAIL` and `TEST_STUDENT_PASSWORD` to match `.env`.
+7. Start the build and open archived `allure-report/index.html` in build artifacts.
+
+A pipeline-style example for student repositories is available at [`examples/jenkins/Jenkinsfile`](examples/jenkins/Jenkinsfile). The Open Source job is root-level Multibranch Pipeline: it mirrors the Cloud learning flow, but does not create per-student Jenkins folders and does not require admin provisioning.
+
 ## Make Commands
 
 All available `make` targets in this repository:

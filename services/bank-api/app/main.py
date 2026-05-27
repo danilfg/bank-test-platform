@@ -3,12 +3,14 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+import re
 import secrets
 import string
 import uuid
 from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal, ROUND_HALF_UP
-from urllib.parse import quote
+from ipaddress import ip_address
+from urllib.parse import quote, urlparse
 
 import httpx
 from fastapi import Cookie, Depends, FastAPI, Header, Query, Request
@@ -392,7 +394,26 @@ class JenkinsRunsPayload(BaseModel):
     service_name: str
     folder_path: str
     job_name: str
+    repository_url: str = ""
+    branch_name: str = "main"
+    jenkinsfile_path: str = "Jenkinsfile"
+    job_url: str | None = None
+    branch_job_url: str | None = None
     runs: list[JenkinsRunResponse]
+
+
+class JenkinsRepositoryPayload(BaseModel):
+    repository_url: str = Field(default="", max_length=500)
+    branch_name: str = Field(default="main", min_length=1, max_length=120)
+    jenkinsfile_path: str = Field(default="Jenkinsfile", min_length=1, max_length=240)
+
+
+class JenkinsRepositoryResponse(JenkinsRepositoryPayload):
+    service_name: str
+    job_name: str
+    job_url: str | None = None
+    branch_job_url: str | None = None
+    mode: str
 
 
 class AllureOpenUrlResponse(BaseModel):
@@ -1123,9 +1144,16 @@ def ensure_jenkins_details(access: StudentIdentityAccess, host: str, actor: Stud
     details = access.details_json.copy() if isinstance(access.details_json, dict) else {}
     username = (actor.username or actor.email or "student").strip().lower()
     slug = sanitize_identity_slug(username)
-    folder_path = str(details.get("folder_path") or f"students/{slug}")
-    job_name = str(details.get("job_name") or os.getenv("JENKINS_STARTER_JOB_NAME", "starter-job"))
-    job_url = str(details.get("job_url") or f"{jenkins_external_url(host)}/job/students/job/{slug}/job/{job_name}/")
+    folder_path = str(details.get("folder_path") or f"local/{slug}")
+    job_name = str(details.get("job_name") or os.getenv("JENKINS_STARTER_JOB_NAME", "training-github-allure"))
+    job_url = str(details.get("job_url") or f"{jenkins_external_url(host)}/job/{job_name}/")
+    repository_url = str(
+        details.get("repository_url")
+        or os.getenv("JENKINS_DEFAULT_REPOSITORY_URL", "https://github.com/danilfg/easybank-jenkins-example-pipeline.git")
+    )
+    branch_name = str(details.get("branch_name") or os.getenv("JENKINS_DEFAULT_BRANCH", "main"))
+    jenkinsfile_path = str(details.get("jenkinsfile_path") or "Jenkinsfile")
+    branch_job_url = str(details.get("branch_job_url") or f"{job_url.rstrip('/')}/job/{quote(branch_name, safe='')}/")
     reports_url = str(details.get("reports_url") or f"{job_url.rstrip('/')}/allure/")
     reports = details.get("allure_reports")
     if not isinstance(reports, list):
@@ -1136,8 +1164,13 @@ def ensure_jenkins_details(access: StudentIdentityAccess, host: str, actor: Stud
             "jenkins_url": str(details.get("jenkins_url") or jenkins_external_url(host)),
             "folder_path": folder_path,
             "job_name": job_name,
-            "job_path": str(details.get("job_path") or f"{folder_path}/{job_name}"),
+            "job_path": str(details.get("job_path") or job_name),
             "job_url": job_url,
+            "repository_url": repository_url,
+            "branch_name": branch_name,
+            "jenkinsfile_path": jenkinsfile_path,
+            "branch_job_url": branch_job_url,
+            "job_type": str(details.get("job_type") or "multibranch"),
             "reports_url": reports_url,
             "allure_reports": reports[-10:],
             "last_build_number": int(details.get("last_build_number") or 0),
@@ -1146,6 +1179,111 @@ def ensure_jenkins_details(access: StudentIdentityAccess, host: str, actor: Stud
         }
     )
     return details
+
+
+def _groovy_literal(value: str) -> str:
+    return json.dumps(value)
+
+
+def _validate_jenkins_repository(payload: JenkinsRepositoryPayload) -> JenkinsRepositoryPayload:
+    repo = payload.repository_url.strip()
+    if not repo:
+        raise DomainError(422, "JENKINS_REPOSITORY_REQUIRED", "Repository URL is required")
+    parsed = urlparse(repo)
+    if parsed.scheme != "https" or parsed.hostname != "github.com":
+        raise DomainError(422, "JENKINS_REPOSITORY_INVALID", "Only public GitHub HTTPS repositories are allowed")
+    path = parsed.path.rstrip("/")
+    if path.endswith(".git"):
+        path = path[:-4]
+    if not re.fullmatch(r"/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", path):
+        raise DomainError(422, "JENKINS_REPOSITORY_INVALID", "Repository URL must point to a GitHub owner/repository")
+    hostname = parsed.hostname or ""
+    try:
+        address = ip_address(hostname)
+        if address.is_private or address.is_loopback or address.is_link_local:
+            raise DomainError(422, "JENKINS_REPOSITORY_INVALID", "Internal repository hosts are not allowed")
+    except ValueError:
+        pass
+    branch = payload.branch_name.strip() or "main"
+    if any(part in branch for part in ["..", " ", "\\", "~", "^", ":"]):
+        raise DomainError(422, "JENKINS_BRANCH_INVALID", "Branch name is invalid")
+    script_path = payload.jenkinsfile_path.strip().lstrip("/") or "Jenkinsfile"
+    if script_path != "Jenkinsfile":
+        raise DomainError(422, "JENKINSFILE_PATH_INVALID", "Only Jenkinsfile in the repository root is allowed")
+    return JenkinsRepositoryPayload(repository_url=f"https://github.com{path}.git", branch_name=branch, jenkinsfile_path=script_path)
+
+
+async def configure_real_jenkins_multibranch(details: dict, host: str) -> bool:
+    repository_url = str(details.get("repository_url") or "").strip()
+    if not repository_url:
+        return True
+    job_name = str(details.get("job_name") or os.getenv("JENKINS_STARTER_JOB_NAME", "training-github-allure"))
+    branch_name = str(details.get("branch_name") or "main")
+    jenkinsfile_path = str(details.get("jenkinsfile_path") or "Jenkinsfile")
+    demo_student_email = os.getenv("DEMO_STUDENT_EMAIL", "student@easyitlab.tech")
+    demo_student_password = os.getenv("DEMO_STUDENT_PASSWORD", "student123")
+    script = f"""
+import hudson.model.ParametersDefinitionProperty
+import hudson.model.PasswordParameterDefinition
+import hudson.model.StringParameterDefinition
+import jenkins.branch.BranchSource
+import jenkins.model.Jenkins
+import jenkins.plugins.git.GitSCMSource
+import org.jenkinsci.plugins.workflow.multibranch.WorkflowBranchProjectFactory
+import org.jenkinsci.plugins.workflow.multibranch.WorkflowMultiBranchProject
+import java.util.concurrent.TimeUnit
+
+def instance = Jenkins.get()
+def jobName = {_groovy_literal(job_name)}
+def project = instance.getItem(jobName)
+if (project != null && !(project instanceof WorkflowMultiBranchProject)) {{
+  project.delete()
+  project = null
+}}
+if (project == null) {{
+  project = instance.createProject(WorkflowMultiBranchProject, jobName)
+}}
+project.setDescription("Local Open Source training Multibranch Pipeline. Jenkins reads " + {_groovy_literal(jenkinsfile_path)} + " from " + {_groovy_literal(repository_url)} + ".")
+project.getSourcesList().clear()
+def source = new GitSCMSource(null, {_groovy_literal(repository_url)}, "", {_groovy_literal(branch_name)}, "", false)
+project.getSourcesList().add(new BranchSource(source))
+def factory = new WorkflowBranchProjectFactory()
+factory.setScriptPath({_groovy_literal(jenkinsfile_path)})
+project.setProjectFactory(factory)
+project.save()
+def indexing = project.scheduleBuild2(0)
+try {{
+  indexing?.getFuture()?.get(60, TimeUnit.SECONDS)
+}} catch (Throwable ignored) {{
+}}
+try {{
+  def branchJob = project.getItem({_groovy_literal(branch_name)})
+  if (branchJob != null) {{
+    branchJob.removeProperty(ParametersDefinitionProperty.class)
+    branchJob.addProperty(new ParametersDefinitionProperty(
+      new StringParameterDefinition("TEST_STUDENT_EMAIL", {_groovy_literal(demo_student_email)}, "Local demo student email from .env"),
+      new PasswordParameterDefinition("TEST_STUDENT_PASSWORD", {_groovy_literal(demo_student_password)}, "Local demo student password from .env"),
+      new StringParameterDefinition("TEST_BRANCH", {_groovy_literal(branch_name)}, "Git branch is configured on the Multibranch job; this is kept for lesson visibility")
+    ))
+    branchJob.save()
+  }}
+}} catch (Throwable parameterError) {{
+  println("Cannot preconfigure branch parameters: " + parameterError.getMessage())
+}}
+instance.save()
+println("ok")
+"""
+    base_url = jenkins_internal_url()
+    admin_user = os.getenv("JENKINS_ADMIN_USER", "admin")
+    admin_password = os.getenv("JENKINS_ADMIN_PASSWORD", "admin")
+    try:
+        async with httpx.AsyncClient(timeout=90, auth=(admin_user, admin_password)) as client:
+            headers = await jenkins_request_crumb(client, base_url)
+            response = await client.post(f"{base_url}/scriptText", headers=headers, data={"script": script})
+            response.raise_for_status()
+            return True
+    except Exception:
+        return False
 
 
 def build_mock_jenkins_run(build_number: int, details: dict) -> dict:
@@ -1181,10 +1319,11 @@ async def jenkins_request_crumb(client: httpx.AsyncClient, base_url: str) -> dic
 
 
 async def run_real_jenkins_build(details: dict, host: str) -> dict | None:
-    public_job_url = str(details.get("job_url") or "").strip()
+    public_job_url = str(details.get("branch_job_url") or details.get("job_url") or "").strip()
     if not public_job_url:
         return None
     internal_job_url = _jenkins_public_to_internal(public_job_url, host).rstrip("/") + "/"
+    parent_job_url = _jenkins_public_to_internal(str(details.get("job_url") or ""), host).rstrip("/") + "/"
     base_url = jenkins_internal_url()
     admin_user = os.getenv("JENKINS_ADMIN_USER", "admin")
     admin_password = os.getenv("JENKINS_ADMIN_PASSWORD", "admin")
@@ -1192,6 +1331,13 @@ async def run_real_jenkins_build(details: dict, host: str) -> dict | None:
     try:
         async with httpx.AsyncClient(timeout=20, auth=(admin_user, admin_password)) as client:
             headers = await jenkins_request_crumb(client, base_url)
+            if str(details.get("job_type") or "") == "multibranch" and parent_job_url:
+                await client.post(f"{parent_job_url}build", headers=headers)
+                for _ in range(10):
+                    exists = await client.get(f"{internal_job_url}api/json")
+                    if exists.status_code < 400:
+                        break
+                    await asyncio.sleep(2)
             trigger = await client.post(f"{internal_job_url}build", headers=headers)
             if trigger.status_code not in {200, 201, 202}:
                 return None
@@ -1292,6 +1438,43 @@ async def resolve_allure_open_url(host: str, preferred_job_url: str) -> dict[str
         pass
     fallback = f"{jenkins_url}/job/training-github-allure/"
     return {"url": fallback, "mode": "job"}
+
+
+async def resolve_real_jenkins_allure_url(details: dict, host: str) -> str | None:
+    public_job_url = str(details.get("job_url") or "").strip()
+    if not public_job_url:
+        return None
+    internal_job_url = _jenkins_public_to_internal(public_job_url, host).rstrip("/") + "/"
+    admin_user = os.getenv("JENKINS_ADMIN_USER", "admin")
+    admin_password = os.getenv("JENKINS_ADMIN_PASSWORD", "admin")
+    try:
+        async with httpx.AsyncClient(timeout=15, auth=(admin_user, admin_password)) as client:
+            response = await client.get(
+                f"{internal_job_url}api/json",
+                params={"tree": "jobs[name,url,lastSuccessfulBuild[number,url],lastCompletedBuild[number,url],lastBuild[number,url]]"},
+            )
+            if response.status_code >= 400:
+                return None
+            payload = response.json()
+            candidates: list[tuple[int, str]] = []
+            for job in payload.get("jobs") or []:
+                if not isinstance(job, dict):
+                    continue
+                build = job.get("lastSuccessfulBuild") or job.get("lastCompletedBuild") or job.get("lastBuild")
+                if not isinstance(build, dict):
+                    continue
+                build_url = str(build.get("url") or "")
+                build_number = int(build.get("number") or 0)
+                if build_url:
+                    candidates.append((build_number, build_url.rstrip("/") + "/"))
+            for _build_number, build_url in sorted(candidates, reverse=True):
+                artifact_url = f"{build_url}artifact/allure-report/index.html"
+                artifact_check = await client.get(artifact_url)
+                if artifact_check.status_code < 400:
+                    return _jenkins_internal_to_public(artifact_url, host)
+    except Exception:
+        return None
+    return None
 
 
 async def get_identity_fresh(db: AsyncSession, identity_id: uuid.UUID) -> StudentIdentity | None:
@@ -1657,6 +1840,9 @@ async def student_allure_open_url(
     host = request.url.hostname or "127.0.0.1"
     jenkins_access = await ensure_student_tool_access(db, actor, "JENKINS")
     details = ensure_jenkins_details(jenkins_access, host, actor)
+    live_allure_url = await resolve_real_jenkins_allure_url(details, host)
+    if live_allure_url:
+        return {"url": live_allure_url, "mode": "report"}
     job_url = str(details.get("job_url") or f"{jenkins_external_url(host)}/")
     return await resolve_allure_open_url(host, job_url)
 
@@ -1679,8 +1865,69 @@ async def student_jenkins_runs(
         "service_name": "JENKINS",
         "folder_path": str(details["folder_path"]),
         "job_name": str(details["job_name"]),
+        "repository_url": str(details["repository_url"]),
+        "branch_name": str(details["branch_name"]),
+        "jenkinsfile_path": str(details["jenkinsfile_path"]),
+        "job_url": str(details["job_url"]),
+        "branch_job_url": str(details["branch_job_url"]),
         "runs": sorted(runs, key=lambda item: item.build_number, reverse=True),
     }
+
+
+@app.get("/students/jenkins/repository", tags=["Students / Jenkins"], response_model=JenkinsRepositoryResponse, include_in_schema=False)
+async def student_jenkins_repository(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    claims: dict = Depends(require_system_role(SystemRole.STUDENT.value)),
+):
+    actor = await get_student_actor(db, claims)
+    access = await ensure_student_tool_access(db, actor, "JENKINS")
+    host = request.url.hostname or "127.0.0.1"
+    details = ensure_jenkins_details(access, host, actor)
+    access.details_json = details
+    await db.commit()
+    return JenkinsRepositoryResponse(
+        service_name="JENKINS",
+        repository_url=str(details["repository_url"]),
+        branch_name=str(details["branch_name"]),
+        jenkinsfile_path=str(details["jenkinsfile_path"]),
+        job_name=str(details["job_name"]),
+        job_url=str(details["job_url"]),
+        branch_job_url=str(details["branch_job_url"]),
+        mode=str(details["mode"]),
+    )
+
+
+@app.patch("/students/jenkins/repository", tags=["Students / Jenkins"], response_model=JenkinsRepositoryResponse, include_in_schema=False)
+async def update_student_jenkins_repository(
+    payload: JenkinsRepositoryPayload,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    claims: dict = Depends(require_system_role(SystemRole.STUDENT.value)),
+):
+    actor = await get_student_actor(db, claims)
+    access = await ensure_student_tool_access(db, actor, "JENKINS")
+    normalized = _validate_jenkins_repository(payload)
+    host = request.url.hostname or "127.0.0.1"
+    details = ensure_jenkins_details(access, host, actor)
+    details["repository_url"] = normalized.repository_url
+    details["branch_name"] = normalized.branch_name
+    details["jenkinsfile_path"] = normalized.jenkinsfile_path
+    details = ensure_jenkins_details(type("AccessView", (), {"details_json": details})(), host, actor)  # type: ignore[arg-type]
+    configured = await configure_real_jenkins_multibranch(details, host)
+    details["mode"] = "api" if configured else "mock"
+    access.details_json = details
+    await db.commit()
+    return JenkinsRepositoryResponse(
+        service_name="JENKINS",
+        repository_url=str(details["repository_url"]),
+        branch_name=str(details["branch_name"]),
+        jenkinsfile_path=str(details["jenkinsfile_path"]),
+        job_name=str(details["job_name"]),
+        job_url=str(details["job_url"]),
+        branch_job_url=str(details["branch_job_url"]),
+        mode=str(details["mode"]),
+    )
 
 
 @app.post("/students/jenkins/job/run", tags=["Students / Jenkins"], response_model=JenkinsRunResponse, include_in_schema=False)

@@ -58,11 +58,19 @@ services:
     build:
       context: .
       dockerfile: infra/jenkins/Dockerfile
+      args:
+        JENKINS_INSTALL_PLUGINS: ${JENKINS_INSTALL_PLUGINS:-false}
     environment:
       JAVA_OPTS: '-Djenkins.install.runSetupWizard=false -Dhudson.model.DirectoryBrowserSupport.CSP= -Duser.language=en -Duser.country=US -Dorg.jvnet.localizer.LocaleProvider=org.jvnet.localizer.LocaleProvider$$DefaultLocaleProvider'
       JENKINS_ADMIN_ID: ${JENKINS_ADMIN_USER}
       JENKINS_ADMIN_PASSWORD: ${JENKINS_ADMIN_PASSWORD}
-      JENKINS_PUBLIC_URL: "http://127.0.0.1:8086"
+      JENKINS_PUBLIC_URL: ${JENKINS_EXTERNAL_URL:-http://127.0.0.1:8086}
+      JENKINS_LOCAL_URL: ${JENKINS_LOCAL_URL:-http://127.0.0.1:8080}
+      DEMO_STUDENT_EMAIL: ${DEMO_STUDENT_EMAIL:-student@easyitlab.tech}
+      DEMO_STUDENT_PASSWORD: ${DEMO_STUDENT_PASSWORD:-student123}
+      JENKINS_STARTER_JOB_NAME: ${JENKINS_STARTER_JOB_NAME:-training-github-allure}
+      JENKINS_DEFAULT_REPOSITORY_URL: ${JENKINS_DEFAULT_REPOSITORY_URL:-https://github.com/danilfg/easybank-jenkins-example-pipeline.git}
+      JENKINS_DEFAULT_BRANCH: ${JENKINS_DEFAULT_BRANCH:-main}
     ports:
       - "${HOST_BIND_IP:-127.0.0.1}:${JENKINS_PORT:-8086}:8080"
     volumes:
