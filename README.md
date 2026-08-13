@@ -95,16 +95,16 @@ Click any preview to open full size.
 
 ## Demo
 
-| Demo | GIF |
-| --- | --- |
-| Platform walkthrough | [<img src="docs/demo/demo.gif" alt="Platform walkthrough" width="360" />](docs/demo/demo.gif) |
-| Jenkins | `docs/demo/jenkins.gif` |
-| Allure | `docs/demo/allure.gif` |
-| PostgreSQL | `docs/demo/postgresql.gif` |
-| Redis | `docs/demo/redis.gif` |
-| Kafka | `docs/demo/kafka.gif` |
-| REST API / Swagger | `docs/demo/swagger.gif` |
-| AsyncAPI | `docs/demo/asyncapi.gif` |
+| Demo | GIF | How to |
+| --- | --- | --- |
+| Platform walkthrough | [<img src="docs/demo/demo.gif" alt="Platform walkthrough" width="360" />](docs/demo/demo.gif) | --- |
+| Jenkins | `docs/demo/jenkins.gif` | [https://youtu.be/V1RbMljHDf8](https://youtu.be/V1RbMljHDf8) |
+| Allure | `docs/demo/allure.gif` | --- |
+| PostgreSQL | `docs/demo/postgresql.gif` | --- |
+| Redis | `docs/demo/redis.gif` | --- |
+| Kafka | `docs/demo/kafka.gif` | --- |
+| REST API / Swagger | `docs/demo/swagger.gif` | [https://youtu.be/vO38eny0oO4](https://youtu.be/vO38eny0oO4) |
+| AsyncAPI | `docs/demo/asyncapi.gif` | --- |
 
 ## Architecture
 
