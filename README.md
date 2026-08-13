@@ -270,6 +270,8 @@ Source files:
 
 ## Quick Start
 
+**Video** - https://youtu.be/vO38eny0oO4
+
 Clone repository:
 
 ```bash
