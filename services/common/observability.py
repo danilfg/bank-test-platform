@@ -32,6 +32,8 @@ def setup_logging(service_name: str) -> None:
 
 def setup_tracing(service_name: str) -> None:
     settings = get_settings()
+    if not settings.tracing_enabled:
+        return
     resource = Resource(attributes={"service.name": service_name})
     provider = TracerProvider(resource=resource)
     provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter(endpoint=settings.jaeger_endpoint + "/v1/traces")))

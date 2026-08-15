@@ -21,6 +21,7 @@ class Settings(BaseSettings):
 
     elasticsearch_url: str = "http://elasticsearch:9200"
     jaeger_endpoint: str = "http://jaeger:4318"
+    tracing_enabled: bool = False
 
 
 @lru_cache
